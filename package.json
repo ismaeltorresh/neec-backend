@@ -1,0 +1,28 @@
+{
+  "name": "neec-backend",
+  "version": "1.0.0",
+  "description": "Backend code for Neec Aplication",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "export NODE_ENV=development; nodemon index.js",
+    "start": "export NODE_ENV=production; node index.js",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ismaeltorresh/neec-backend.git"
+  },
+  "author": "@ismaeltorresh",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^9.8.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
