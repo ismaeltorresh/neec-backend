@@ -1,36 +1,20 @@
 const express = require('express');
+const routerAapp = require('./routes');
 const app = express();
-const port = 3006;
+const env = require('./environments');
 
-app.listen(port, () => {
-  const consoleMessage = process.env.NODE_ENV === 'development' ?  `Server initialized http://localhost:${port} in mode ${process.env.NODE_ENV}` : `Server initialized in mode ${process.env.NODE_ENV}`;
+app.use(express.json());
+
+// app.use((req, res) => {
+//   res.status(404).json({ message: 'I didn’t find the endpoint'});
+// })
+
+app.listen(env.port, () => {
+  const consoleMessage = env.execution === 'development' ?  `Server initialized ${env.server}:${env.port} in mode ${env.execution}` : `Server initialized in mode ${env.execution}`;
   console.info(consoleMessage);
 });
 
-if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
-  if (process.env.NODE_ENV === 'development') {
-    const environment = {};
-
-    /* *********************************
-    * DATA MODELS ONLY FOR DEVELOPMENT *
-    ********************************* */
-
-    // *** BLOG ***
-    app.get('/api/blog/', (req, res) => {
-      return res.status(200).json({
-        title: 'string',
-        content: 'string',
-        date: 'date',
-        authorId: 'string',
-        categoriesId: 'string[]'
-      });
-    });
-
-  } else if (process.env.NODE_ENV === 'production') {
-    const environment = {};
-  } else {
-    return res.status(500).json({ error: 'I dont have a defined execution environment' });
-  }
+if (env.execution === 'development' || env.execution === 'production') {
 
   // *** COMMON ***
 
@@ -47,11 +31,9 @@ if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'producti
     );
   });
 
-  // *** BLOG ***
+  // *** SERVICIOS ***
 
-  app.get('/api/blog/posts:postId', (req, res) => {
-    const { postId } = req.params;
-  });
+  routerAapp(app);
 
 } else {
   app.get('*', (req, res) => {
