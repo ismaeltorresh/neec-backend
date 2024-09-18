@@ -27,7 +27,7 @@ router.get('/datamodel', (req, res) => {
       contact: 'contact[]',
     });
   } else {
-    return res.status(500).json({ message: 'I don’t have a correct execution environment'});
+    return res.status(403).json({ message: 'I don’t have a correct execution environment'});
   }
 });
 
