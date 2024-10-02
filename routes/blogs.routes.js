@@ -45,3 +45,19 @@ router.get('/datamodel', (req, res) => {
 
 module.exports = router;
 
+{
+  ojos: [
+    {
+      color: 'azul',
+      tamaño: 'grande',
+      parpadea: true,
+    },
+    {
+      color: 'azul',
+      tamaño: 'grande',
+      forma: 'redonda',
+      parpadea: true,
+    }
+  ]
+}
+

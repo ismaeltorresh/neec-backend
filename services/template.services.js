@@ -1,4 +1,3 @@
-const boom = import('@hapi/boom');
 class templateService {
 
   constructor(){

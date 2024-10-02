@@ -1,5 +1,6 @@
-const { stack } = require("../routes/blogs.routes");
-const { env } = require("../environments");
+require("../instrument.js");
+const env = require("../environments");
+const Sentry = require("@sentry/node");
 
 function errorNotFound(req, res, next) {
   res.status(404).json({ error: 'No se encontró la ruta solicitada' });
@@ -11,12 +12,13 @@ function errorLog(err, req, res, next) {
 
 function errorHandler(err, req, res, next) {
   if (env.execution === 'development') {
-    res.status(500).json({ 
+    res.status(500).json({
       message: err.message,
       stack: err.stack
     });
   } else {
-    res.status(500).json({ 
+    Sentry.captureException(err);
+    res.status(500).json({
       message: err.message
     });
   }

@@ -1,11 +1,39 @@
-const { errorLog, errorHandler, errorBoom, errorNotFound } = require('./midelwares/error.handler');
-const express = require('express');
-const routerAapp = require('./routes');
+require("./instrument.js");
+const { auth, requiresScopes } = require("express-oauth2-jwt-bearer");
+const { errorLog, errorHandler, errorBoom, errorNotFound } = require('./middlewares/error.handler');
+const boom = require('@hapi/boom');
+const cors = require('cors');
 const env = require('./environments');
+const express = require('express');
+const helmet = require('helmet');
+const perfTimeout = require('./middlewares/perf.handler');
+const routerAapp = require('./routes');
+const Sentry = require("@sentry/node");
 
 const app = express();
+const jwtCheck = auth({
+  audience: env.audience,
+  issuerBaseURL: env.issuerBaseURL,
+});
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (env.whiteList.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Not allowed by CORS from ${origin}`));
+    }
+  }
+}
+
+app.use(jwtCheck);
 
 app.use(express.json());
+
+app.use(helmet());
+
+app.use(cors(corsOptions));
+
+app.use(perfTimeout);
 
 app.listen(env.port, () => {
   const consoleMessage = env.execution === 'development' ?  `Server initialized ${env.server}:${env.port} in mode ${env.execution}` : `Server initialized in ${env.port} mode ${env.execution}`;
@@ -13,16 +41,6 @@ app.listen(env.port, () => {
 });
 
 if (env.execution === 'development' || env.execution === 'production') {
-
-  // *** COMMON ***
-
-  // Middleware to handle request timeout
-  // app.use((req, res, next) => {
-  //   res.setTimeout(1000, () => {
-  //     res.status(408).json({ message: 'Request timeout for this request'});
-  //   }); 
-  //   next();
-  // });
 
   app.get('/', (req, res) => {
     res.status(200).send('Welcome to Neec backend server');
@@ -40,6 +58,10 @@ if (env.execution === 'development' || env.execution === 'production') {
   // *** ROUTES ***
   routerAapp(app);
 
+  if (env.execution === 'production') {
+    Sentry.setupExpressErrorHandler(app);
+  }
+
   // *** ERROR HANDLING ***
   app.use(errorNotFound);
   app.use(errorLog);
@@ -51,4 +73,3 @@ if (env.execution === 'development' || env.execution === 'production') {
     return res.status(500).json({ message: 'I don’t have a defined execution environment'});
   });
 }
-

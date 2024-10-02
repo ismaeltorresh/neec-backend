@@ -16,6 +16,7 @@
   "author": "@ismaeltorresh",
   "license": "ISC",
   "devDependencies": {
+    "axios": "^1.7.7",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -24,7 +25,12 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
+    "@sentry/node": "^8.32.0",
+    "@sentry/profiling-node": "^8.32.0",
+    "cors": "^2.8.5",
     "express": "^4.19.2",
+    "express-oauth2-jwt-bearer": "^1.6.0",
+    "helmet": "^8.0.0",
     "joi": "^17.13.3"
   }
 }
