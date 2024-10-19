@@ -6,8 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "export NODE_ENV=development; nodemon index.js",
-    "start": "export NODE_ENV=production; node index.js",
-    "lint": "eslint"
+    "start": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node dist/index.bundle.js",
+    "lint": "eslint",
+    "build": "webpack --config webpack.config.js"
   },
   "repository": {
     "type": "git",
@@ -20,8 +21,12 @@
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
+    "ignore-loader": "^0.1.2",
     "nodemon": "^3.1.4",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",

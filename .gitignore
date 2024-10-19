@@ -221,4 +221,4 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/node,windows,linux,macos
 
-environments/
+environments/environments.production.js

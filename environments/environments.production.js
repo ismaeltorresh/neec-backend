@@ -4,8 +4,11 @@ const env = {
   server: 'https://neec-backend.loha.mx',
   port: 80,
   whiteList: ['https://localhost'],
-  audience: '',
-  issuerBaseURL: '',
+  audience: process.env.AUDIENCE,
+  issuerBaseURL: process.env.ISSUER_BASE_URL,
+  issuer: process.env.ISSUER,
+  jwksUri: process.env.JWKS_URI,
+  algorithms: ['RS256'],
 }
 
 module.exports = env;

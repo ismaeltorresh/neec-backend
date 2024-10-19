@@ -12,8 +12,8 @@ const Sentry = require("@sentry/node");
 
 const app = express();
 const jwtCheck = auth({
-  audience: env.audience,
-  issuerBaseURL: env.issuerBaseURL,
+  audience: process.env.AUDIENCE,
+  issuerBaseURL: process.env.ISSUER_BASE_URL,
 });
 const corsOptions = {
   origin: function (origin, callback) {
@@ -35,10 +35,12 @@ app.use(cors(corsOptions));
 
 app.use(perfTimeout);
 
+/*
 app.listen(env.port, () => {
   const consoleMessage = env.execution === 'development' ?  `Server initialized ${env.server}:${env.port} in mode ${env.execution}` : `Server initialized in ${env.port} mode ${env.execution}`;
   console.info(consoleMessage);
 });
+*/
 
 if (env.execution === 'development' || env.execution === 'production') {
 

@@ -4,8 +4,11 @@ const env = {
   server: 'http://localhost',
   port:3006,
   whiteList: ['http://localhost:3006', undefined],
-  audience: 'https://api.loha.mx',
-  issuerBaseURL: 'https://dev-oww130dxq3575ipw.us.auth0.com/',
+  audience: process.env.AUDIENCE,
+  issuerBaseURL: process.env.ISSUER_BASE_URL,
+  issuer: process.env.ISSUER,
+  jwksUri: process.env.JWKS_URI,
+  algorithms: ['RS256'],
 }
 
 module.exports = env;
