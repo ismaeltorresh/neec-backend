@@ -3,7 +3,7 @@ const env = {
   service: 'neec',
   server: 'https://neec-backend.loha.mx',
   port: 80,
-  whiteList: ['https://localhost'],
+  whiteList: ['http://localhost'],
   audience: process.env.AUDIENCE,
   issuerBaseURL: process.env.ISSUER_BASE_URL,
   issuer: process.env.ISSUER,

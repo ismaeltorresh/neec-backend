@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "export NODE_ENV=development; nodemon index.js",
-    "start": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node dist/index.bundle.js",
+    "dev": "export NODE_ENV=development; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; nodemon index.js",
+    "start": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node index.js",
+    "prod": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node dist/index.bundle.js",
     "lint": "eslint",
     "build": "webpack --config webpack.config.js"
   },
