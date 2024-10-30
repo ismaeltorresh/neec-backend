@@ -12,8 +12,8 @@ const services = new templateService();
 let results;
 
 router.get('/datamodel', (req, res, next) => {
-  console.info('ESTO-->>', env.execution)
-  if (env.execution === 'development') {
+  console.info('ESTO-->>', process.env.execution)
+  if (process.env.execution === 'development') {
     res.status(200).json(templateField);
   } else {
     next(
