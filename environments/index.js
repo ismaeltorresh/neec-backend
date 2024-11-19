@@ -1,8 +1,3 @@
-const dot = require(
-  /* webpackInclude: ['./environments.development.js', './environments.production.js'] */
-  `./environments.${process.env.NODE_ENV}`
-);
-
-const env = dot;
+const env = require(`./environments.${process.env.NODE_ENV}`)
 
 module.exports = env;

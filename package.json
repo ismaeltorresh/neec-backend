@@ -4,9 +4,10 @@
   "description": "Backend code for Neec Aplication",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "export NODE_ENV=development; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; jest",
     "dev": "export NODE_ENV=development; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; nodemon index.js",
     "start": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node index.js",
+    "prod": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node dist/index.bundle.js",
     "lint": "eslint",
     "build": "webpack --config webpack.config.js"
   },
@@ -22,8 +23,10 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "ignore-loader": "^0.1.2",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.4",
     "prettier": "^3.3.3",
+    "supertest": "^6.3.4",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
     "webpack-node-externals": "^3.0.0"

@@ -28,6 +28,7 @@ module.exports = {
   externals: [nodeExternals({
     allowlist: [
       '@sentry/node',
+      'zlib',
       '@sentry/profiling-node',
       'cors',
       'express',

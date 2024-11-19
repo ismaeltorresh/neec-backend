@@ -1,0 +1,35 @@
+const env = require('./index');
+
+describe('Environments Configuration', () => {
+  it('should load the correct environment configuration', () => {
+    expect(env).toBeDefined();
+
+    // Verificar que las variables de entorno principales estén definidas
+    expect(env.execution).toBeDefined();
+    expect(env.service).toBeDefined();
+    expect(env.server).toBeDefined();
+    expect(env.port).toBeDefined();
+
+    // Agregar más aserciones según las variables de entorno específicas de tu aplicación
+  });
+
+  // Puedes agregar más pruebas para verificar el comportamiento específico
+  // de la carga de entornos, como por ejemplo:
+
+  // it('should load development environment by default', () => {
+  //   // Eliminar process.env.NODE_ENV si está definido
+  //   delete process.env.NODE_ENV;
+  //   // Volver a requerir el módulo para forzar la recarga
+  //   jest.resetModules();
+  //   const env = require('./index');
+  //   expect(env.execution).toBe('development');
+  // });
+
+  // it('should load production environment when NODE_ENV is set', () => {
+  //   process.env.NODE_ENV = 'production';
+  //   // Volver a requerir el módulo para forzar la recarga
+  //   jest.resetModules();
+  //   const env = require('./index');
+  //   expect(env.execution).toBe('production');
+  // });
+});

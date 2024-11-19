@@ -1,4 +1,6 @@
+const Sentry = require("@sentry/node");
 require("./instrument.js");
+
 const { auth, requiresScopes } = require("express-oauth2-jwt-bearer");
 const { errorLog, errorHandler, errorBoom, errorNotFound } = require('./middlewares/error.handler');
 const boom = require('@hapi/boom');
@@ -8,7 +10,6 @@ const express = require('express');
 const helmet = require('helmet');
 const perfTimeout = require('./middlewares/perf.handler');
 const routerAapp = require('./routes');
-const Sentry = require("@sentry/node");
 
 const app = express();
 const jwtCheck = auth({
@@ -35,12 +36,11 @@ app.use(cors(corsOptions));
 
 app.use(perfTimeout);
 
-/*
+
 app.listen(env.port, () => {
   const consoleMessage = env.execution === 'development' ?  `Server initialized ${env.server}:${env.port} in mode ${env.execution}` : `Server initialized in ${env.port} mode ${env.execution}`;
   console.info(consoleMessage);
 });
-*/
 
 if (env.execution === 'development' || env.execution === 'production') {
 

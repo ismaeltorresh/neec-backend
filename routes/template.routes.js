@@ -12,12 +12,13 @@ const services = new templateService();
 let results;
 
 router.get('/datamodel', (req, res, next) => {
-  if (env.execution === 'development') {
+  console.info('ESTO-->>', process.env.execution)
+  if (process.env.execution === 'development') {
     res.status(200).json(templateField);
   } else {
     next(
       boom.forbidden('I don’t have a correct execution environment')
-    )
+    );
   }
 });
 
