@@ -1,14 +1,12 @@
 const boom = require('@hapi/boom');
 const env = require('../environments');
 const express = require('express');
-const templateService = require('../services/template.services');
 
 const validatorHandler = require('../middlewares/validator.handler');
 const { templateDelete, templateField, templateGet, templatePatch, templatePost } = require('../schemas/template.schema');
 
 
 const router = express.Router();
-const services = new templateService();
 let results;
 
 router.get('/datamodel', (req, res, next) => {
@@ -79,7 +77,6 @@ router.patch(
     try {
       const {id} = req.params;
       const body = req.body;
-      const item = services.update(id)
       res.status(200).json({
         message: 'Updated',
         data: req.body
@@ -98,7 +95,6 @@ router.delete(
   (req, res, next) => {
     try {
       const { id } = req.params;
-      const item = services.delete(id)
       res.status(200).json({
         message: 'Deleted',
         data: req.params
