@@ -3,7 +3,7 @@ const env = require('../environments');
 const express = require('express');
 
 const validatorHandler = require('../middlewares/validator.handler');
-const { template, templateDelete, templateGet, templatePatch, templatePost } = require('../schemas/template.schema');
+const { users, usersDelete, usersGet, usersPatch, usersPost } = require('../schemas/users.schema');
 
 
 const router = express.Router();
@@ -11,7 +11,7 @@ let results;
 
 router.get('/datamodel', (req, res, next) => {
   if (env.execution === 'development') {
-    res.status(200).json(template);
+    res.status(200).json(users);
   } else {
     next(
       boom.forbidden('I don’t have a correct execution environment')
@@ -25,7 +25,6 @@ router.get("/debug-sentry", function mainHandler(req, res) {
 
 router.get('/', (req, res, next) => {
   try {
-    console.log(req.body);
     results = [];
     res.status(200).json(results);
   } catch (error) {
@@ -37,7 +36,7 @@ router.get('/', (req, res, next) => {
 
 router.get(
   '/:id',
-  validatorHandler(templateGet, 'params'),
+  validatorHandler(usersGet, 'params'),
   (req, res, next) => {
     try {
       results = [];
@@ -52,7 +51,7 @@ router.get(
 
 router.post(
   '/',
-  validatorHandler(templatePost, 'body'),
+  validatorHandler(usersPost, 'body'),
   (req, res, next) => {
     try {
       const body = req.body;
@@ -72,7 +71,7 @@ router.post(
 
 router.patch(
   '/:id',
-  validatorHandler(templatePatch, 'params'),
+  validatorHandler(usersPatch, 'params'),
   (req, res, next) => {
     try {
       const {id} = req.params;
@@ -91,7 +90,7 @@ router.patch(
 
 router.delete(
   '/:id',
-  validatorHandler(templateDelete, 'params'),
+  validatorHandler(usersDelete, 'params'),
   (req, res, next) => {
     try {
       const { id } = req.params;

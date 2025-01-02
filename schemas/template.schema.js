@@ -7,6 +7,7 @@ const templateField = {
   id: Joi.string().uuid(),
   isPublished: Joi.boolean(),
   lastUpdate: Joi.date(),
+  run: Joi.string().valid('sql', 'nosql', 'between'),
   sumary: Joi.string(),
   tagList: Joi.array(),
   title: Joi.string(),
@@ -15,14 +16,17 @@ const templateField = {
 
 const templateDelete = Joi.object({
   id: templateField.id.required(),
+  run:templateField.run.required()
 });
 
 const templateGet = Joi.object({
   id: templateField.id.required(),
+  run:templateField.run.required()
 });
 
 const templatePatch = Joi.object({
   id: templateField.id.required(),
+  run:templateField.run.required()
 });
 
 const templatePost = Joi.object({
@@ -34,6 +38,7 @@ const templatePost = Joi.object({
   sumary: templateField.sumary.required(),
   title: templateField.title.required(),
   userId: templateField.userId.required(),
+  run: templateField.run.required()
 });
 
 module.exports = {
