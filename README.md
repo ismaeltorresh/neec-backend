@@ -16,19 +16,22 @@ Sigue estos pasos para instalar y ejecutar el proyecto localmente:
 
 1. **Clona este repositorio**:
 
-   ```bash
+   ```
+   bash
    git clone git@github.com:ismaeltorresh/neec-backend.git  
    ```
 
 2. **Navega al directorio del proyecto**:
 
-    ```bash
+    ```
+    bash
     cd neec-backend
     ```
 
 3. **Instala las dependencias necesarias**:
 
-    ```bash
+    ```
+    bash
     npm install
     ```
 
@@ -48,15 +51,17 @@ Sigue estos pasos para instalar y ejecutar el proyecto localmente:
 
    Para iniciar el servidor en modo desarrollo:
 
-        ```bash
-        npm run dev
-        ```
+    ```
+    bash
+    npm run dev
+    ```
 
    El servidor estará disponible en `http://localhost:3000`.
 
    Para producción, primero compila y luego inicia:
 
-    ```bash
+    ```
+    bash
     npm run build
     npm start
     ```
@@ -136,13 +141,15 @@ Desarrollado y mantenido por [ismaeltorresh](https://github.com/ismaeltorresh).
 
 10. **Estructurar correctamente los datos anidados**
     - En bases de datos NoSQL como MongoDB, es común anidar objetos en lugar de usar relaciones:
-      ```{
+      ```
+      {
         "userId": 123,
         "profile": {
           "firstName": "Carlos",
           "lastName": "Hernández"
         }
-      }```
+      }
+      ```
 
 11. **Campos obligatorios**
     - Todos los schemas deben contener los siguientes campos:
