@@ -1,21 +1,15 @@
+const express = require('express'); 
+const addressRoutes = require('./address.routes');
 const blogsRoutes = require('./blogs.routes');
-const contactsRoutes = require('./contacts.routes');
-const express = require('express');
-const labelsRoutes = require('./tags.routes');
-const peopleRoutes = require('./people.routes');
-const templateRoutes = require('./template.routes');
 const usersRoutes = require('./users.routes');
+const templateRoutes = require('./template.routes');
 
 function routesApp(app) {
-  const router = express.Router();
-
-  app.use('/api/v1', router);
-  router.use('/template', templateRoutes);
+  const router = express.Router(); 
+  router.use('/address', addressRoutes);
   router.use('/blogs', blogsRoutes);
-  router.use('/contacts', contactsRoutes);
-  router.use('/people', peopleRoutes);
-  router.use('/tags', labelsRoutes);
   router.use('/users', usersRoutes);
+  router.use('/template', templateRoutes);
 }
 
 module.exports = routesApp;

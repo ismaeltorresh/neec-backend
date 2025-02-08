@@ -2,8 +2,8 @@ const boom = require('@hapi/boom');
 const env = require('../environments');
 const express = require('express');
 const validatorHandler = require('../middlewares/validator.handler');
-const {schema, get, del, post, update} = require('../schemas/template.schema');
-const service = 'Template';
+const {schema, get, del, post, update} = require('../schemas/address.schema');
+const service = 'address';
 
 
 const router = express.Router();

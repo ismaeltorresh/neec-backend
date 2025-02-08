@@ -1,11 +1,11 @@
 const request = require('supertest');
 const express = require('express');
-const serviceRoutes = require('./template.routes');
-const service = 'Template';
+const serviceRoutes = require('./address.routes');
+const service = 'address';
 
 const app = express();
 app.use(express.json());
-app.use('/', serviceRoutes);
+app.use('/', addressRoutes);
 
 describe(`Pruebas para rutas de ${service}`, () => {
   it('GET /schema debería retornar el esquema en desarrollo', async () => {
