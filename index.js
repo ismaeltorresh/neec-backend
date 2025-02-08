@@ -10,12 +10,12 @@ const express = require('express');
 const helmet = require('helmet');
 const perfTimeout = require('./middlewares/perf.handler');
 const routerAapp = require('./routes');
-
 const app = express();
 const jwtCheck = auth({
   audience: process.env.AUDIENCE,
   issuerBaseURL: process.env.ISSUER_BASE_URL,
 });
+
 const corsOptions = {
   origin: function (origin, callback) {
     if (env.whiteList.includes(origin)) {

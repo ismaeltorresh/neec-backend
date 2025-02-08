@@ -96,3 +96,64 @@ Las contribuciones son bienvenidas.  Sigue estos pasos:
 Este proyecto está licenciado bajo la Licencia MIT (ver archivo `LICENSE`).
 
 Desarrollado y mantenido por [ismaeltorresh](https://github.com/ismaeltorresh).
+
+## **Convensiones:** ##
+
+### Nombres de los campos ###
+
+1. **Seguir una convención de nombres consistente**
+    - **CamelCase**: `clientName`, `creationDate`.
+    - No usar espacios en nombres de columnas o campos.
+
+2. **Usar nombres significativos y descriptivos**
+    - Evita abreviaciones innecesarias.
+    - Prefiere `creationDate` en lugar de `cd`.
+    - Usa nombres que indiquen el propósito del campo (`useUi` en lugar de `idUser`).
+
+3. **No incluir el tipo de dato en el nombre**
+    - `userName`, no `userNameStr`.
+    - Si el tipo cambia en el futuro, el nombre seguirá siendo válido.
+
+4. **Usar prefijos solo cuando sea necesario**
+    - Evita redundancias: en una tabla `clients`, no llames a un campo `clientName`, solo `name`.
+    
+5. **Usar nombres en singular**
+    - La tabla representa una colección, pero las columnas representan una propiedad de una entidad:
+        - Tabla: `users`, columna: `email`.
+
+6. **Utilizar convenciones estándar para claves primarias y foráneas**
+    - Para claves primarias: `id` o `userId`.
+    - Para claves foráneas: usa el nombre de la tabla seguida de `Id`: `userId`, `clientId`.
+    
+7. **Evitar palabras reservadas de SQL**
+    - Ejemplo: `date`, `order`, `select`.
+
+8. **No mezclar idiomas**
+    - Usa nombres en inglés (`customerId`).
+
+9. **No hacer nombres demasiado largos**
+    - MongoDB, Firebase y otras bases de datos basadas en documentos almacenan los nombres de los campos junto con los datos, lo que puede aumentar el tamaño del documento.
+
+10. **Estructurar correctamente los datos anidados**
+    - En bases de datos NoSQL como MongoDB, es común anidar objetos en lugar de usar relaciones:
+      ```{
+        "userId": 123,
+        "profile": {
+          "firstName": "Carlos",
+          "lastName": "Hernández"
+        }
+      }```
+
+11. **Campos obligatorios**
+    - Todos los schemas deben contener los siguientes campos:
+    ```
+    const schemaName = {
+      createdAt: Joi.date().timestamp(), // FECHA Y HORA DE CREACIÓN
+      dataSource: Joi.string(), // EL ORIGEN O DESTINO DE LOS DATOS EJE: SQL | NOSQL | BOTH
+      id: Joi.string().uuid(), // IDENTIFICADOR ÚNICO
+      recordStatus: Joi.boolean(), // INDICA SI EL REGISTRO SE PUEDE MOSTRAR O NO
+      updatedAt: Joi.date().timestamp(), // FECHA Y HORA DE ACTUALIZACIÓN
+      updatedBy: Joi.string().uuid(), // ID DEL USUARIO QUE MODIFICÓ
+      useAs: Joi.string(), // EL USO QUE LE DARÁS EJE: CONTACT | 
+    }
+    ```

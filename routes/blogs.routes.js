@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const env = require('../environments');
+const {schema, get, del, post, update} = require('../schemas/blogs.schema');
 
 
 router.post('/posts', (req, res) => {
@@ -24,7 +25,7 @@ router.get('/posts:postId', (req, res) => {
   const { postId } = req.params;
 });
 
-router.get('/datamodel', (req, res) => {
+router.get('/schema', (req, res) => {
   if (env.execution === 'development') {
     return res.status(200).json({
       content: 'string', // El contenido del post
@@ -44,20 +45,3 @@ router.get('/datamodel', (req, res) => {
 });
 
 module.exports = router;
-
-{
-  ojos: [
-    {
-      color: 'azul',
-      tamaño: 'grande',
-      parpadea: true,
-    },
-    {
-      color: 'azul',
-      tamaño: 'grande',
-      forma: 'redonda',
-      parpadea: true,
-    }
-  ]
-}
-

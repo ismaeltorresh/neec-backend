@@ -10,11 +10,11 @@ function routesApp(app) {
   const router = express.Router();
 
   app.use('/api/v1', router);
+  router.use('/template', templateRoutes);
   router.use('/blogs', blogsRoutes);
   router.use('/contacts', contactsRoutes);
   router.use('/people', peopleRoutes);
   router.use('/tags', labelsRoutes);
-  router.use('/template', templateRoutes);
   router.use('/users', usersRoutes);
 }
 

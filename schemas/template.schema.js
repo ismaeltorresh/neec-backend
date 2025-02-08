@@ -1,50 +1,68 @@
+/*
+The provided code is a validation schema using the Joi library in JavaScript.
+It defines a schema object that contains validation rules for different fields. Each field has a specific type and some additional constraints.
+Several validation schemas are defined for different CRUD operations (Create, Read, Update, Delete). These schemas are Joi objects that use the rules defined in the schema and specify which fields are required for each operation.
+Each of these schemas ensures that the provided data complies with the specified rules before allowing the operation to proceed, which helps maintain data integrity and consistency in the application.
+*/
+
 const Joi = require('joi');
 
-const templateField = {
-  content: Joi.string(),
-  date: Joi.date(),
-  featureImage: Joi.string(),
-  id: Joi.string().uuid(),
-  isPublished: Joi.boolean(),
-  lastUpdate: Joi.date(),
-  run: Joi.string().valid('sql', 'nosql', 'between'),
-  sumary: Joi.string(),
-  tagList: Joi.array(),
-  title: Joi.string(),
-  userId: Joi.string().uuid(),
+const schema = {
+  // ** Start recommended mandatory schema **
+  createdAt: Joi.date().timestamp(), // Date and time of creation
+  dataSource: Joi.string().valid('sql', 'nosql', 'both'), // The origin or destination of the data e.g. sql | nosql | both
+  id: Joi.string().uuid(), // Unique identifier
+  recordStatus: Joi.boolean(), // Indicates if the record can be displayed or not
+  updatedAt: Joi.date().timestamp(), // Date and time of update
+  updatedBy: Joi.string().uuid(), // ID of the user who modified
+  useAs: Joi.string(), // The use you will give e.g. contact | ...
+  // ** Ends recommended mandatory schema **
 };
 
-const templateDelete = Joi.object({
-  id: templateField.id.required(),
-  run:templateField.run.required()
+
+const del = Joi.object({
+  // ** Start recommended required fields **
+  dataSource: schema.dataSource.required(),
+  id: schema.id.required(),
+  recordStatus: schema.recordStatus.valid(false).required(),
+  updatedAt: schema.updatedAt.required(),
+  updatedBy: schema.updatedBy.required(),
+  // ** Start recommended required fields **
 });
 
-const templateGet = Joi.object({
-  id: templateField.id.required(),
-  run:templateField.run.required()
+const get = Joi.object({
+  // ** Start recommended required fields **
+  dataSource: schema.dataSource.required(),
+  recordStatus: schema.recordStatus.required(),
+  // ** Ends recommended required fields **
 });
 
-const templatePatch = Joi.object({
-  id: templateField.id.required(),
-  run:templateField.run.required()
+const update = Joi.object({
+  // ** Start recommended required fields **
+  dataSource: schema.dataSource.required(),
+  id: schema.id.required(),
+  updatedAt: schema.updatedAt.required(),
+  updatedBy: schema.updatedBy.required(),
+  recordStatus: schema.recordStatus.required(),
+  // ** Ends recommended required fields **
 });
 
-const templatePost = Joi.object({
-  content: templateField.content.required(),
-  date: templateField.date.required(),
-  featureImage: templateField.featureImage.required(),
-  isPublished: templateField.isPublished.required(),
-  lastUpdate: templateField.lastUpdate.required(),
-  sumary: templateField.sumary.required(),
-  title: templateField.title.required(),
-  userId: templateField.userId.required(),
-  run: templateField.run.required()
+const post = Joi.object({
+  // ** Start recommended required fields **
+  createdAt: schema.createdAt.required(),
+  dataSource: schema.dataSource.required(),
+  id: schema.id.required(),
+  recordStatus: schema.recordStatus.required(),
+  updatedAt: schema.updatedAt.required(),
+  updatedBy: schema.updatedBy.required(),
+  useAs: schema.useAs.required(),
+  // ** Ends recommended required fields **
 });
 
 module.exports = {
-  templateDelete,
-  templateField,
-  templateGet,
-  templatePatch,
-  templatePost,
+  schema,
+  del,
+  get,
+  update,
+  post,
 };

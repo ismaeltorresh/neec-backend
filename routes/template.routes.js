@@ -1,17 +1,17 @@
 const boom = require('@hapi/boom');
 const env = require('../environments');
 const express = require('express');
-
 const validatorHandler = require('../middlewares/validator.handler');
-const { template, templateDelete, templateGet, templatePatch, templatePost } = require('../schemas/template.schema');
+const {schema, get, del, post, update} = require('../schemas/template.schema');
+const service = 'Template';
 
 
 const router = express.Router();
 let results;
 
-router.get('/datamodel', (req, res, next) => {
-  if (env.execution === 'development') {
-    res.status(200).json(template);
+router.get('/schema', (req, res, next) => {
+  if (process.env.execution === 'development') {
+    res.status(200).json(schema);
   } else {
     next(
       boom.forbidden('I don’t have a correct execution environment')
@@ -23,24 +23,71 @@ router.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My intentionally Sentry error! is only test");
 });
 
-router.get('/', (req, res, next) => {
+router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
+  const inputData = req.query;
   try {
-    console.log(req.body);
-    results = [];
+    if (inputData.dataSource === 'sql') {
+      // Code to get data frome sql data base
+      results = [{
+        createdAt: 1698765432,
+        dataSource: 'sql',
+        id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+        recordStatus: true,
+        updatedAt: 1698765432,
+        updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+        useAs: 'template',
+      }];
+    } else if (inputData.dataSource === 'nosql') {
+      // Code to get data frome nosql data base
+      results = [{}];
+    } else if (inputData.dataSource === 'both') {
+      // code to get data frome sql an nosql database
+      results = {
+        sql: [{}],
+        nosql: [{}]
+      };
+    } else {
+      next(
+        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
+      );
+    }
     res.status(200).json(results);
   } catch (error) {
     next(
-      boom.forbidden('I don’t have a correct execution environment')
+      boom.forbidden(`Failed to retrieve all data from the ${service} service`)
     );
   }
 });
 
-router.get(
-  '/:id',
-  validatorHandler(templateGet, 'params'),
-  (req, res, next) => {
+router.get('/:id', validatorHandler(get, 'query'),(req, res, next) => {
+    const inputData = req.query;
+    inputData.id = req.params.id;
     try {
-      results = [];
+      if (inputData.dataSource === 'sql') {
+        // Code to get data frome sql data base
+        results = {
+          createdAt: 1698765432,
+          dataSource: 'sql',
+          id: inputData.id,
+          recordStatus: true,
+          updatedAt: 1698765432,
+          updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+          useAs: 'template',
+        };
+      } else if (inputData.dataSource === 'nosql') {
+        // Code to get data frome nosql data base
+        results = [{}];
+      } else if (inputData.dataSource === 'both') {
+        // code to get data frome sql an nosql database
+        results = {
+          sql: [{}],
+          nosql: [{}]
+        };
+      } else {
+        next(
+          boom.forbidden(`${inputData.dataSource} not is a valid data source`)
+        );
+      }
       res.status(200).json(results);
     } catch (error) {
       next(
@@ -50,61 +97,100 @@ router.get(
   }
 );
 
-router.post(
-  '/',
-  validatorHandler(templatePost, 'body'),
-  (req, res, next) => {
-    try {
-      const body = req.body;
+router.post('/', validatorHandler(post, 'body'), (req, res, next) => {
+  const inputData = req.body;
+  try {
+    if (inputData.dataSource === 'sql') {
+      // Code to get data frome sql data base
       results = {
         message: 'Created',
-        body: req.body,
+        body: inputData,
         id: 'A1B2C3D4E5F6'
       };
-      res.status(201).json(results);
-    } catch (error) {
+    } else if (inputData.dataSource === 'nosql') {
+      // Code to get data frome nosql data base
+      results = {};
+    } else if (inputData.dataSource === 'both') {
+      // code to get data frome sql an nosql database
+      results = {
+        sql: {},
+        nosql: {}
+      };
+    } else {
       next(
-        boom.forbidden('I don’t have a correct execution environment')
+        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
       );
     }
+    res.status(201).json(results);
+  } catch (error) {
+    next(
+      boom.forbidden('I don’t have a correct execution environment')
+    );
   }
-);
+});
 
-router.patch(
-  '/:id',
-  validatorHandler(templatePatch, 'params'),
-  (req, res, next) => {
-    try {
-      const {id} = req.params;
-      const body = req.body;
-      res.status(200).json({
+router.put('/:id', validatorHandler(update, 'body'), (req, res, next) => {
+  const inputData = req.body;
+  inputData.id = req.params.id;
+  try {
+    if (inputData.dataSource === 'sql') {
+      // Code to get data frome sql data base
+      results = {
         message: 'Updated',
-        data: req.body
-      });
-    } catch (error) {
+        data: inputData
+      };
+    } else if (inputData.dataSource === 'nosql') {
+      // Code to get data frome nosql data base
+      results = {};
+    } else if (inputData.dataSource === 'both') {
+      // code to get data frome sql an nosql database
+      results = {
+        sql: {},
+        nosql: {}
+      };
+    } else {
       next(
-        boom.forbidden('I don’t have a correct execution environment')
+        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
       );
     }
+    res.status(200).json(results);
+  } catch (error) {
+    next(
+      boom.forbidden('I don’t have a correct execution environment')
+    );
   }
-);
+});
 
-router.delete(
-  '/:id',
-  validatorHandler(templateDelete, 'params'),
-  (req, res, next) => {
-    try {
-      const { id } = req.params;
-      res.status(200).json({
+router.delete('/:id', validatorHandler(del, 'body'), (req, res, next) => {
+  const inputData = req.body;
+  inputData.id = req.params.id;
+  try {
+    if (inputData.dataSource === 'sql') {
+      // Code to get data frome sql data base
+      results = {
         message: 'Deleted',
-        data: req.params
-      });
-    } catch (error) {
+        data: inputData
+      };
+    } else if (inputData.dataSource === 'nosql') {
+      // Code to get data frome nosql data base
+      results = {};
+    } else if (inputData.dataSource === 'both') {
+      // code to get data frome sql an nosql database
+      results = {
+        sql: {},
+        nosql: {}
+      };
+    } else {
       next(
-        boom.forbidden('I don’t have a correct execution environment')
+        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
       );
     }
+    res.status(200).json(results);
+  } catch (error) {
+    next(
+      boom.forbidden('I don’t have a correct execution environment')
+    );
   }
-);
+});
 
 module.exports = router;

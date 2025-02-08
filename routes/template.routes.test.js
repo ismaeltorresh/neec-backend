@@ -1,27 +1,25 @@
 const request = require('supertest');
 const express = require('express');
-const templateRoutes = require('./template.routes'); // Ajusta la ruta si es necesario
+const templateRoutes = require('./template.routes');
 const boom = require('@hapi/boom');
+const { create } = require('browser-sync');
+const service = 'Template';
 
 const app = express();
-app.use(express.json()); // Asegúrate de que Express pueda parsear JSON
-app.use('/', templateRoutes); // Monta las rutas de tu archivo
+app.use(express.json());
+app.use('/', templateRoutes);
 
 describe('Pruebas para rutas de template', () => {
-  it('GET /datamodel debería retornar el esquema en desarrollo', async () => {
-    // Mockea el entorno de desarrollo
+  it('GET /schema debería retornar el esquema en desarrollo', async () => {
     process.env.execution = 'development';
-
-    const res = await request(app).get('/datamodel');
+    const res = await request(app).get('/schema');
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('id'); // Verifica alguna propiedad del esquema
+    expect(res.body).toHaveProperty('id');
   });
 
-  it('GET /datamodel debería retornar un error en producción', async () => {
-    // Mockea el entorno de producción
+  it('GET /schema debería retornar un error en producción', async () => {
     process.env.execution = 'production';
-
-    const res = await request(app).get('/datamodel');
+    const res = await request(app).get('/schema');
     expect(res.statusCode).toBe(403);
     expect(res.body.message).toBe('I don’t have a correct execution environment');
   });
@@ -33,23 +31,73 @@ describe('Pruebas para rutas de template', () => {
 
   it('POST / debería crear un nuevo template', async () => {
     const newTemplate = {
-      content: 'The content',
-      date: '2024-05-08',
-      featureImage: 'image.jpg',
-      isPublished: 'true',
-      lastUpdate: '2024-05-08',
-      sumary: 'The Sumary',
-      title: 'The title',
-      userId: '3F2504E0-4F89-11D3-9A0C-0305E82C3301',
+      createdAt: 1698765432,
+      dataSource: 'sql',
+      id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+      recordStatus: true,
+      updatedAt: 1698765432,
+      updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+      useAs: 'template',
     };
     const res = await request(app)
-      .post('/')
-      .send(newTemplate);
-
+    .post('/')
+    .send(newTemplate);
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('Created');
     expect(res.body.body).toEqual(newTemplate); // Verifica que los datos coincidan
   });
 
-  // ... más pruebas para otras rutas y métodos (GET /:id, PATCH /:id, DELETE /:id)
+  it('GET / Debería traer un listado registros', async () => {
+    const newTemplate = {
+      dataSource: 'sql',
+      recordStatus: true,
+    };
+    const res = await request(app)
+    .get('/')
+    .query(newTemplate);
+    expect(res.statusCode).toBe(200);
+    expect(res.body instanceof Array).toBe(true);
+  });
+
+  it('GET /:id Debería traer un registro', async () => {
+    const newTemplate = {
+      dataSource: 'sql',
+      recordStatus: true
+    };
+    const res = await request(app)
+    .get('/e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f')
+    .query(newTemplate);
+    expect(res.statusCode).toBe(200);
+    expect(res.body instanceof Object).toBe(true);
+  });
+
+  it('UPDATE /:id Debería actualizar un registro', async () => {
+    const newTemplate = {
+      dataSource: 'sql',
+      id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+      updatedAt: 1698765432,
+      updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+      recordStatus: true,
+    };
+    const res = await request(app)
+    .put('/e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f')
+    .send(newTemplate);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Updated');
+  });
+
+  it('DELETE /:id Debería eliminar un registro', async () => {
+    const newTemplate = {
+      dataSource: 'sql',
+      id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+      updatedAt: 1698765432,
+      updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
+      recordStatus: false,
+    };
+    const res = await request(app)
+    .delete('/e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f')
+    .send(newTemplate);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Deleted');
+  });
 });

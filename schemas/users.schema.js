@@ -1,40 +1,57 @@
 const Joi = require('joi');
 
 const users = {
-  created_at: Joi.date().timestamp(),
-  email: Joi.string().email().required(),
-  id: Joi.string().uuid(),
-  last_login: Joi.date().timestamp(),
+  createdAt: Joi.date().timestamp(), // FECHA Y HORA DE CREACIÓN
+  dataSource: Joi.string(), // EL ORIGEN O DESTINO DE LOS DATOS EJE: SQL | NOSQL | BOTH
+  email: Joi.string().email(),
+  id: Joi.string().uuid(), // IDENTIFICADOR ÚNICO
+  lastLogin: Joi.date().timestamp(),
   location: Joi.string(),
-  password_hash: Joi.string().required(),
-  people_id: Joi.string().uuid(),
-  reset_password_token: Joi.string(),
+  passwordHash: Joi.string(),
+  passwordResetToken: Joi.string(),
+  peopleId: Joi.string().uuid(),
+  recordStatus: Joi.boolean(), // INDICA SI EL REGISTRO SE PUEDE MOSTRAR O NO
   role: Joi.string(), // e.g., 'admin', 'user'
   status: Joi.string(), // e.g., 'active', 'inactive'
-  updated_at: Joi.date().timestamp(),
-  updated_by: Joi.string().uuid(),
-  username: Joi.string().required(),
-  verification_token: Joi.string(),
+  tokenVerification: Joi.string(),
+  updatedAt: Joi.date().timestamp(), // FECHA Y HORA DE ACTUALIZACIÓN
+  updatedBy: Joi.string().uuid(), // ID DEL USUARIO QUE MODIFICÓ
+  useAs: Joi.string(), // EL USO QUE LE DARÁS EJE: CONTACT |
+  userName: Joi.string(),
 };
 
 const usersDelete = Joi.object({
   id: users.id.required(),
+  updatedAt: users.updatedAt.required(),
+  updatedBy: users.updatedBy.required(),
+  dataSource: users.dataSource.required(),
+  recordStatus: users.recordStatus.required(),
 });
 
 const usersGet = Joi.object({
   id: users.id.required(),
+  dataSource: users.dataSource.required(),
 });
 
 const usersPatch = Joi.object({
   id: users.id.required(),
+  updatedAt: users.updatedAt.required(),
+  updatedBy: users.updatedBy.required(),
+  dataSource: users.dataSource.required(),
 });
 
 const usersPost = Joi.object({
+  createdAt: users.createdAt.required(),
+  dataSource: users.dataSource.required(),
   id: users.id.required(),
-  username: users.username.required(),
-  password_hash: users.password_hash.required(),
-  status: users.status.required(),
+  passwordHash: users.passwordHash.required(),
+  recordStatus: users.recordStatus.required(),
   role: users.role.required(),
+  status: users.status.required(),
+  updatedAt: users.updatedAt.required(),
+  updatedBy: users.updatedBy.required(),
+  useAs: Joi.required(),
+  userName: users.userName.required(),
 });
 
 module.exports = {
