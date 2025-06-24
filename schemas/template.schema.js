@@ -9,11 +9,11 @@ const Joi = require('joi');
 
 const schema = {
   // ** Start recommended mandatory schema **
-  createdAt: Joi.date().timestamp(), // Date and time of creation
+  createdAt: Joi.string().pattern(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/), // Date and time of creation in 'YYYY-MM-DD HH:MM:SS' format
   dataSource: Joi.string().valid('sql', 'nosql', 'both'), // The origin or destination of the data e.g. sql | nosql | both
   id: Joi.string().uuid(), // Unique identifier
-  recordStatus: Joi.boolean(), // Indicates if the record can be displayed or not
-  updatedAt: Joi.date().timestamp(), // Date and time of update
+  recordStatus: Joi.number().valid(0, 1), // Indicates if the record can be displayed or not
+  updatedAt: Joi.string().pattern(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/), // Date and time of update in 'YYYY-MM-DD HH:MM:SS' format
   updatedBy: Joi.string().uuid(), // ID of the user who modified
   useAs: Joi.string(), // The use you will give e.g. contact | ...
   // ** Ends recommended mandatory schema **

@@ -3,7 +3,7 @@ const env = require("../environments");
 const Sentry = require("@sentry/node");
 
 function errorNotFound(req, res, next) {
-  res.status(404).json({ error: 'No se encontró la ruta solicitada' });
+  res.status(404).json({ error: 'The requested route was not found' });
 }
 
 function errorLog(err, req, res, next) {

@@ -4,10 +4,10 @@
   "description": "Backend code for Neec Aplication",
   "main": "index.js",
   "scripts": {
-    "test": "export NODE_ENV=development; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; jest",
-    "dev": "export NODE_ENV=development; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; nodemon index.js",
-    "start": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node index.js",
-    "prod": "export NODE_ENV=production; export AUDIENCE=https://api.loha.mx; export ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/; node dist/index.bundle.js",
+    "test": "cross-env NODE_ENV=development AUDIENCE=https://api.loha.mx ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/ jest",
+    "dev": "cross-env NODE_ENV=development AUDIENCE=https://api.loha.mx ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/ nodemon index.js",
+    "start": "cross-env NODE_ENV=production AUDIENCE=https://api.loha.mx ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/ node index.js",
+    "prod": "cross-env NODE_ENV=production AUDIENCE=https://api.loha.mx ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/ node dist/index.bundle.js",
     "lint": "eslint",
     "build": "webpack --config webpack.config.js"
   },
@@ -19,6 +19,7 @@
   "license": "ISC",
   "devDependencies": {
     "axios": "^1.7.7",
+    "cross-env": "^7.0.3",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -39,6 +40,9 @@
     "express": "^4.19.2",
     "express-oauth2-jwt-bearer": "^1.6.0",
     "helmet": "^8.0.0",
-    "joi": "^17.13.3"
+    "joi": "^17.13.3",
+    "mariadb": "^3.4.2",
+    "mysql2": "^3.14.0",
+    "sequelize": "^6.37.7"
   }
 }
