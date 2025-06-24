@@ -16,6 +16,7 @@ const schema = {
   updatedAt: Joi.date().timestamp(), // Date and time of update
   updatedBy: Joi.string().uuid(), // ID of the user who modified
   useAs: Joi.string(), // The use you will give e.g. contact | ...
+  slug: Joi.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), // Slug for URL-friendly representation
   // ** Ends recommended mandatory schema **
 };
 

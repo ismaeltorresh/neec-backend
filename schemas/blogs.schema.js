@@ -17,6 +17,7 @@ const schema = {
   updatedBy: Joi.string().uuid(), // ID DEL USUARIO QUE MODIFICÓ
   useAs: Joi.string(), // EL USO QUE LE DARÁS EJE: CONTACT |
   userId: Joi.string().uuid(),
+  slug: Joi.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), // Slug for URL-friendly representation
 };
 
 const post = Joi.object({

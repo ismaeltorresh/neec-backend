@@ -18,6 +18,7 @@ const users = {
   updatedBy: Joi.string().uuid(), // ID DEL USUARIO QUE MODIFICÓ
   useAs: Joi.string(), // EL USO QUE LE DARÁS EJE: CONTACT |
   userName: Joi.string(),
+  slug: Joi.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), // Slug for URL-friendly representation
 };
 
 const usersDelete = Joi.object({

@@ -10,34 +10,35 @@ const Joi = require('joi');
 const schema = {
   // ** Start recommended mandatory schema **
   createdAt: Joi.date().timestamp(), // Date and time of creation
-  dataSource: Joi.string().valid('sql', 'nosql', 'both').required(), // The origin or destination of the data e.g. sql | nosql | both
-  id: Joi.string().uuid().required(), // Unique identifier
-  recordStatus: Joi.boolean().required(), // Indicates if the record can be displayed or not
-  updatedAt: Joi.date().timestamp().required(), // Date and time of update
-  updatedBy: Joi.string().uuid().required(), // ID of the user who modified
-  useAs: Joi.string().required(), // The use you will give e.g. contact | client...
-  nameOne: Joi.string().required(), // First name, mandatory
+  dataSource: Joi.string().valid('sql', 'nosql', 'both'), // The origin or destination of the data e.g. sql | nosql | both
+  id: Joi.string().uuid(), // Unique identifier
+  recordStatus: Joi.boolean(), // Indicates if the record can be displayed or not
+  updatedAt: Joi.date().timestamp(), // Date and time of update
+  updatedBy: Joi.string().uuid(), // ID of the user who modified
+  useAs: Joi.string(), // The use you will give e.g. contact | ...
   slug: Joi.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), // Slug for URL-friendly representation
   // ** Ends recommended mandatory schema **
-  nameTwo: Joi.string(), // Second name, optional
-  nameThree: Joi.string(), // Third name, optional
-  birthdate: Joi.date(), // Date of birth, optional
-  birthHour: Joi.string() // 
-    .pattern(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/), // Time of birth, HH:mm format, optional
-  birthCountry: Joi.string(), // Country of birth, optional
-  identificationNumber: Joi.string().required(), // Identification number, mandatory
-  identificationType: Joi.string().required(), // Type of identification, mandatory
-  genderBirth: Joi.string()
-    .valid('male', 'female'), // Birth gender, optional
-  genderCurrent: Joi.string()
-    .valid('male', 'female', 'binary'), // Current gender, optional
-  maritalStatus: Joi.string()
-    .valid('single', 'married', 'divorced', 'widowed'),
-  language: Joi.string(),
-  weight: Joi.number(),
-  height: Joi.number(),
-  bloodType: Joi.string()
-    .valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),
+
+  brand: Joi.string(), // Brand of the product
+  categoryId: Joi.string().uuid(), // Category ID
+  code: Joi.string().alphanum(), // Product code
+  color: Joi.string(), // Color of the product
+  description: Joi.string(), // Description
+  flavor: Joi.string(), // Flavor of the product
+  height: Joi.number().min(0), // Height of the product
+  length: Joi.number().min(0), // Length of the product
+  material: Joi.string(), // Material of the product
+  photoUrl: Joi.string().uri(), // URL of the product photo
+  price: Joi.number(), // Sale price
+  rating: Joi.number().min(0).max(5), // Product rating
+  size: Joi.string(), // Size of the product
+  sku: Joi.string().alphanum(), // Stock Keeping Unit
+  stock: Joi.number().integer().min(0), // Stock quantity
+  sumary: Joi.string(), // Summary
+  tags: Joi.array().items(Joi.string()), // Tags associated with the product
+  units: Joi.number().integer().min(0), // Number of units
+  weight: Joi.number().min(0), // Weight of the product
+  width: Joi.number().min(0), // Width of the product
 };
 
 
@@ -78,6 +79,9 @@ const post = Joi.object({
   updatedBy: schema.updatedBy.required(),
   useAs: schema.useAs.required(),
   // ** Ends recommended required fields **
+
+  sumary: schema.sumary.required(),
+  price: schema.price.required(),
 });
 
 module.exports = {
