@@ -10,7 +10,7 @@ const Joi = require('joi');
 const schema = {
   // ** Start recommended mandatory schema **
   createdAt: Joi.date().timestamp(), // Date and time of creation
-  dataSource: Joi.string().valid('sql', 'nosql', 'both').required(), // The origin or destination of the data e.g. sql | nosql | both
+  dataSource: Joi.string().valid('sql', 'nosql', 'both', 'fake').required(), // The origin or destination of the data e.g. sql | nosql | both
   id: Joi.string().uuid().required(), // Unique identifier
   recordStatus: Joi.boolean().required(), // Indicates if the record can be displayed or not
   updatedAt: Joi.date().timestamp().required(), // Date and time of update

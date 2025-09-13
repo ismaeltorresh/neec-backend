@@ -8,6 +8,8 @@ const env = {
   issuerBaseURL: process.env.ISSUER_BASE_URL,
   issuer: process.env.ISSUER,
   jwksUri: process.env.JWKS_URI,
+  oauth: false,
+  sentry: false,
   algorithms: ['RS256'],
 }
 

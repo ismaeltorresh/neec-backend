@@ -14,6 +14,8 @@ function routesApp(app) {
   router.use('/blogs', blogsRoutes);
   router.use('/users', usersRoutes);
   router.use('/template', templateRoutes);
+  // Mount the router under /api so routes become /api/<service>
+  app.use('/api/v1', router);
 }
 
 module.exports = routesApp;

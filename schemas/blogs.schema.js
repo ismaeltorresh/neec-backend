@@ -3,7 +3,7 @@ const Joi = require('joi');
 const schema = {
   content: Joi.string(),
   createdAt: Joi.date().timestamp(), // FECHA Y HORA DE CREACIÓN
-  dataSource: Joi.string(), // EL ORIGEN O DESTINO DE LOS DATOS EJE: SQL | NOSQL | BOTH
+  dataSource: Joi.string().valid('sql', 'nosql', 'both', 'fake'), // The origin or destination of the data e.g. sql | nosql | both
   date: Joi.date(),
   featureImage: Joi.string(),
   id: Joi.string().uuid(), // IDENTIFICADOR ÚNICO

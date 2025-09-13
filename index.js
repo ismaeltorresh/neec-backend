@@ -26,7 +26,9 @@ const corsOptions = {
   }
 }
 
-app.use(jwtCheck);
+if (env.oauth) {
+  app.use(jwtCheck);
+}
 
 app.use(express.json());
 
@@ -60,7 +62,7 @@ if (env.execution === 'development' || env.execution === 'production') {
   // *** ROUTES ***
   routerAapp(app);
 
-  if (env.execution === 'production') {
+  if (env.execution === 'production' && env.sentry) {
     Sentry.setupExpressErrorHandler(app);
   }
 

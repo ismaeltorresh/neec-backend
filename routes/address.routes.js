@@ -27,7 +27,7 @@ router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
   const inputData = req.query;
   try {
     if (inputData.dataSource === 'sql') {
-      // Code to get data frome sql data base
+      // Code to get data from sql data base
       results = [{
         createdAt: 1698765432,
         dataSource: 'sql',
@@ -37,11 +37,15 @@ router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
         updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
         useAs: 'test',
       }];
+    } else if (inputData.dataSource === 'fake') {
+  // Read fake data from test/fakedata.json
+  const fake = require('../test/fakedata.json');
+      results = fake.address || [];
     } else if (inputData.dataSource === 'nosql') {
-      // Code to get data frome nosql data base
+      // Code to get data from nosql data base
       results = [{}];
     } else if (inputData.dataSource === 'both') {
-      // code to get data frome sql an nosql database
+      // code to get data from sql an nosql database
       results = {
         sql: [{}],
         nosql: [{}]
@@ -64,7 +68,7 @@ router.get('/:id', validatorHandler(get, 'query'),(req, res, next) => {
     inputData.id = req.params.id;
     try {
       if (inputData.dataSource === 'sql') {
-        // Code to get data frome sql data base
+        // Code to get data from sql data base
         results = {
           createdAt: 1698765432,
           dataSource: 'sql',
@@ -74,11 +78,16 @@ router.get('/:id', validatorHandler(get, 'query'),(req, res, next) => {
           updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
           useAs: 'test',
         };
+      } else if (inputData.dataSource === 'fake') {
+  // Read fake data from test/fakedata.json and find by id
+  const fake = require('../test/fakedata.json');
+        const list = fake.address || [];
+        results = list.find(item => item.id === inputData.id) || {};
       } else if (inputData.dataSource === 'nosql') {
-        // Code to get data frome nosql data base
+        // Code to get data from nosql data base
         results = [{}];
       } else if (inputData.dataSource === 'both') {
-        // code to get data frome sql an nosql database
+        // code to get data from sql an nosql database
         results = {
           sql: [{}],
           nosql: [{}]
