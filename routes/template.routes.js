@@ -1,202 +1,177 @@
 const boom = require('@hapi/boom');
-const env = require('../environments');
 const express = require('express');
 const validatorHandler = require('../middlewares/validator.handler');
-const {schema, get, del, post, update} = require('../schemas/template.schema');
+const { schema, get, del, post, update } = require('../schemas/template.schema');
+const { sequelize } = require('../db/connection');
 const service = 'Template';
-
+const env = require('../environments');
 
 const router = express.Router();
-let results;
+const connection = sequelize; // Connection to SQL database
 
 router.get('/schema', (req, res, next) => {
-  if (process.env.execution === 'development') {
+  if (env.execution === 'development') {
     res.status(200).json(schema);
   } else {
-    next(
-      boom.forbidden('I don’t have a correct execution environment')
-    );
+    next(boom.forbidden('You do not have the correct execution environment'));
   }
 });
 
 router.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My intentionally Sentry error! is only test");
+  throw new Error("My intentional Sentry error! This is just a test");
 });
 
-router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
+router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
   const inputData = req.query;
   try {
-    if (inputData.dataSource === 'sql') {
-      // Code to get data from sql data base
-      results = [{
-        createdAt: 1698765432,
-        dataSource: 'sql',
-        id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
-        recordStatus: true,
-        updatedAt: 1698765432,
-        updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
-        useAs: 'test',
-      }];
-    } else if (inputData.dataSource === 'fake') {
-      const fake = require('../test/fakedata.json');
-      results = fake.template || [];
+    let results = {};
+    if (inputData.dataSource === 'sql' || inputData.dataSource === 'both') {
+      let [rows] = await connection.query('SELECT * FROM template WHERE recordStatus = ?', {
+        replacements: [inputData.recordStatus],
+        type: connection.QueryTypes.SELECT,
+      });
+      rows = typeof rows !== 'object' ? rows : [rows];
+      if (rows) {
+        results.sql = rows.map(row => ({
+          ...row
+        }));
+      } else{
+        next(boom.notFound('No records found'));
+      }
     } else if (inputData.dataSource === 'nosql') {
-      // Code to get data frome nosql data base
-      results = [{}];
-    } else if (inputData.dataSource === 'both') {
-      // code to get data frome sql an nosql database
-      results = {
-        sql: [{}],
-        nosql: [{}]
-      };
+      // Code to fetch data from the NoSQL database
+      results.nosql = [{}];
     } else {
-      next(
-        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
-      );
+      next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
+    }
+  } catch (error) {
+    console.error(error);
+    next(boom.internal(`Error retrieving data from the ${service} service`));
+  }
+});
+
+router.get('/:id', validatorHandler(get, 'query'), async (req, res, next) => {
+  const inputData = req.query;
+  inputData.id = req.params.id;
+  try {
+    let results;
+    if (inputData.dataSource === 'sql' || inputData.dataSource === 'both') {
+      // Use the SQL connection to fetch the data
+      const [rows] = await connection.query('SELECT * FROM template WHERE id = ?', [inputData.id]);
+      if (rows.length === 0) {
+        next(boom.notFound(`No record found with ID ${inputData.id}`));
+        return;
+      }
+      results = {
+        ...rows[0],
+        dataSource: 'sql'
+      };
+      if (inputData.dataSource === 'both') {
+        results = {
+          sql: results,
+          nosql: []
+        };
+      }
+    } else if (inputData.dataSource === 'nosql') {
+      results = [{}];
+    } else {
+      next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
     }
     res.status(200).json(results);
   } catch (error) {
-    next(
-      boom.forbidden(`Failed to retrieve all data from the ${service} service`)
-    );
+    console.error(error);
+    next(boom.internal(`Error retrieving the data from the ${service} service`));
   }
 });
 
-router.get('/:id', validatorHandler(get, 'query'),(req, res, next) => {
-    const inputData = req.query;
-    inputData.id = req.params.id;
-    try {
-      if (inputData.dataSource === 'sql') {
-        // Code to get data from sql data base
-        results = {
-          createdAt: 1698765432,
-          dataSource: 'sql',
-          id: inputData.id,
-          recordStatus: true,
-          updatedAt: 1698765432,
-          updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
-          useAs: 'test',
-        };
-      } else if (inputData.dataSource === 'fake') {
-        const fake = require('../test/fakedata.json');
-        const list = fake.template || [];
-        results = list.find(item => item.id === inputData.id) || {};
-      } else if (inputData.dataSource === 'nosql') {
-        // Code to get data frome nosql data base
-        results = [{}];
-      } else if (inputData.dataSource === 'both') {
-        // code to get data frome sql an nosql database
-        results = {
-          sql: [{}],
-          nosql: [{}]
-        };
-      } else {
-        next(
-          boom.forbidden(`${inputData.dataSource} not is a valid data source`)
-        );
-      }
-      res.status(200).json(results);
-    } catch (error) {
-      next(
-        boom.forbidden('I don’t have a correct execution environment')
-      );
-    }
-  }
-);
-
-router.post('/', validatorHandler(post, 'body'), (req, res, next) => {
+router.post('/', validatorHandler(post, 'body'), async (req, res, next) => {
   const inputData = req.body;
   try {
-    if (inputData.dataSource === 'sql') {
-      // Code to get data frome sql data base
+    let results;
+    if (inputData.dataSource === 'sql' || inputData.dataSource === 'both') {
+      const { createdAt, id, recordStatus, updatedAt, updatedBy, useAs } = inputData;
+      const [result] = await connection.query(
+        'INSERT INTO template (createdAt, id, recordStatus, updatedAt, updatedBy, useAs) VALUES (?, ?, ?, ?, ?, ?)',
+        {
+          replacements: [createdAt, id, recordStatus, updatedAt, updatedBy, useAs],
+          type: connection.QueryTypes.INSERT
+        }
+      );
       results = {
-        message: 'Created',
+        message: 'created',
         body: inputData,
-        id: 'A1B2C3D4E5F6'
+        id: result.insertId
       };
     } else if (inputData.dataSource === 'nosql') {
-      // Code to get data frome nosql data base
       results = {};
-    } else if (inputData.dataSource === 'both') {
-      // code to get data frome sql an nosql database
-      results = {
-        sql: {},
-        nosql: {}
-      };
     } else {
-      next(
-        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
-      );
+      next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
     }
     res.status(201).json(results);
   } catch (error) {
-    next(
-      boom.forbidden('I don’t have a correct execution environment')
-    );
+    console.error(error);
+    next(boom.internal(`Error creating the record in the ${service} service`));
   }
 });
 
-router.put('/:id', validatorHandler(update, 'body'), (req, res, next) => {
+router.put('/:id', validatorHandler(update, 'body'), async (req, res, next) => {
   const inputData = req.body;
   inputData.id = req.params.id;
   try {
-    if (inputData.dataSource === 'sql') {
-      // Code to get data frome sql data base
+    let results;
+    if (inputData.dataSource === 'sql' || inputData.dataSource === 'both') {
+      const { updatedAt, updatedBy, recordStatus, useAs, id } = inputData;
+      const [result] = await connection.query(
+        'UPDATE template SET updatedAt = ?, updatedBy = ?, recordStatus = ?, useAs = ? WHERE id = ?', {
+          replacements: [updatedAt, updatedBy, recordStatus, useAs, id],
+          type: connection.QueryTypes.UPDATE
+        }
+      );
+      if (result.affectedRows === 0) {
+        next(boom.notFound(`No record found with ID ${inputData.id}`));
+        return;
+      }
       results = {
-        message: 'Updated',
+        message: 'updated',
         data: inputData
       };
     } else if (inputData.dataSource === 'nosql') {
-      // Code to get data frome nosql data base
       results = {};
-    } else if (inputData.dataSource === 'both') {
-      // code to get data frome sql an nosql database
-      results = {
-        sql: {},
-        nosql: {}
-      };
     } else {
-      next(
-        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
-      );
+      next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
     }
     res.status(200).json(results);
   } catch (error) {
-    next(
-      boom.forbidden('I don’t have a correct execution environment')
-    );
+    console.error(error);
+    next(boom.internal(`Error updating the record in the ${service} service`));
   }
 });
 
-router.delete('/:id', validatorHandler(del, 'body'), (req, res, next) => {
+router.delete('/:id', validatorHandler(del, 'body'), async (req, res, next) => {
   const inputData = req.body;
   inputData.id = req.params.id;
   try {
-    if (inputData.dataSource === 'sql') {
-      // Code to get data frome sql data base
+    let results;
+    if (inputData.dataSource === 'sql' || inputData.dataSource === 'both') {
+      // Utiliza la conexión SQL para eliminar el registro
+      const [result] = await connection.query('DELETE FROM template WHERE id = ?', [inputData.id]);
+      if (result.affectedRows === 0) {
+        next(boom.notFound(`No record found with ID ${inputData.id}`));
+        return;
+      }
       results = {
-        message: 'Deleted',
+        message: 'Eliminado',
         data: inputData
       };
     } else if (inputData.dataSource === 'nosql') {
-      // Code to get data frome nosql data base
       results = {};
-    } else if (inputData.dataSource === 'both') {
-      // code to get data frome sql an nosql database
-      results = {
-        sql: {},
-        nosql: {}
-      };
     } else {
-      next(
-        boom.forbidden(`${inputData.dataSource} not is a valid data source`)
-      );
+      next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
     }
     res.status(200).json(results);
   } catch (error) {
-    next(
-      boom.forbidden('I don’t have a correct execution environment')
-    );
+    console.error(error);
+    next(boom.internal(`Error deleting the record in the ${service} service`));
   }
 });
 

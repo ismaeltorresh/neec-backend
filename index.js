@@ -16,6 +16,7 @@ const jwtCheck = auth({
   issuerBaseURL: process.env.ISSUER_BASE_URL,
 });
 
+const { sequelize } = require('./db/connection');
 const corsOptions = {
   origin: function (origin, callback) {
     if (env.whiteList.includes(origin)) {
@@ -39,10 +40,20 @@ app.use(cors(corsOptions));
 app.use(perfTimeout);
 
 
-app.listen(env.port, () => {
-  const consoleMessage = env.execution === 'development' ?  `Server initialized ${env.server}:${env.port} in mode ${env.execution}` : `Server initialized in ${env.port} mode ${env.execution}`;
-  console.info(consoleMessage);
-});
+// Prueba conexión y arranca servidor
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Conexión a MariaDB exitosa');
+    await sequelize.sync(); // Solo si quieres crear tablas si no existen
+    app.listen(env.port, () => {
+      const consoleMessage = env.execution === 'development' ?  `Server initialized ${env.server}:${env.port} in mode ${env.execution}` : `Server initialized in ${env.port} mode ${env.execution}`;
+      console.info(consoleMessage);
+    });
+  } catch (err) {
+    console.error('Error al conectar a la base de datos:', err);
+  }
+})();
 
 if (env.execution === 'development' || env.execution === 'production') {
 

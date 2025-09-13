@@ -12,8 +12,8 @@ const schema = {
   createdAt: Joi.date().timestamp(), // Date and time of creation
   dataSource: Joi.string().valid('sql', 'nosql', 'both', 'fake'), // The origin or destination of the data e.g. sql | nosql | both
   id: Joi.string().uuid(), // Unique identifier
-  recordStatus: Joi.boolean(), // Indicates if the record can be displayed or not
-  updatedAt: Joi.date().timestamp(), // Date and time of update
+  recordStatus: Joi.number().valid(0, 1), // Indicates if the record can be displayed or not
+  updatedAt: Joi.string().pattern(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/), // Date and time of update in 'YYYY-MM-DD HH:MM:SS' format
   updatedBy: Joi.string().uuid(), // ID of the user who modified
   useAs: Joi.string(), // The use you will give e.g. contact | ...
   slug: Joi.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), // Slug for URL-friendly representation
