@@ -25,6 +25,19 @@ const corsOptions = {
   }
 }
 
+// Swagger UI for docs (protected)
+const fs = require('fs');
+const path = require('path');
+let swaggerUi;
+let YAML;
+try {
+  swaggerUi = require('swagger-ui-express');
+  YAML = require('yaml');
+} catch (e) {
+  // swagger-ui-express not installed; docs will be available via tools/serve-docs.js
+  swaggerUi = null;
+}
+
 if (env.oauth) {
   if (process.env.AUDIENCE && process.env.ISSUER_BASE_URL) {
     jwtCheck = auth({
@@ -84,6 +97,30 @@ if (env.execution === 'development' || env.execution === 'production') {
       }
     );
   });
+
+  // Mount /docs only if swagger-ui-express is available and the spec file exists
+  try {
+    const specPath = path.join(__dirname, 'docs', 'openapi-full.yaml');
+    if (swaggerUi && fs.existsSync(specPath)) {
+      const specRaw = fs.readFileSync(specPath, 'utf8');
+      const spec = YAML.parse(specRaw);
+
+      // Protection middleware:
+      // - If execution === 'development' allow access
+      // - Otherwise require header X-DOCS-TOKEN === process.env.DOCS_TOKEN
+      function docsAuth(req, res, next) {
+        if (env.execution === 'development') return next();
+        const token = req.header('X-DOCS-TOKEN') || req.query.docsToken;
+        if (process.env.DOCS_TOKEN && token === process.env.DOCS_TOKEN) return next();
+        return res.status(403).json({ message: 'Forbidden: invalid or missing docs token' });
+      }
+
+      app.use('/docs', docsAuth, swaggerUi.serve, swaggerUi.setup(spec, { explorer: true }));
+      console.info('Docs available at /docs');
+    }
+  } catch (err) {
+    console.warn('Could not mount /docs:', err.message);
+  }
 
   // *** ROUTES ***
   routerAapp(app);

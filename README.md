@@ -1,353 +1,239 @@
-# NEEC Backend
+## NEEC Backend - Documentación de la API
 
-Este repositorio contiene el backend del proyecto NEEC.  Está diseñado para manejar la lógica del servidor, la gestión de la base de datos y las APIs que interactúan con el frontend.
+Este repositorio contiene el backend del proyecto NEEC y expone una pequeña API REST montada en Express.
+Esta documentación cubre instalación, configuración y uso de los endpoints disponibles en `/api/v1`.
+
+## Contenido rápido
+
+- Endpoints: `/api/v1/products`, `/api/v1/people`, `/api/v1/address`, `/api/v1/blogs`, `/api/v1/users`, `/api/v1/template`
+- Soporte para varias fuentes de datos por recurso: `sql`, `nosql`, `fake`, `both`.
+- Validaciones con `Joi` via `middlewares/validator.handler.js`.
+- Respuestas de listado con formato paginado `{ data, meta }`.
 
 ## Requisitos previos
 
-Asegúrate de tener instalados los siguientes componentes antes de empezar:
+- Node.js 14+ y npm.
+- (Opcional) Base de datos SQL (MySQL/MariaDB/ PostgreSQL según configuración) si vas a usar `dataSource=sql`.
 
-- **Node.js**: versión 14 o superior.
-- **npm**: versión 6 o superior.
-- **Base de datos**: Se recomienda utilizar PostgreSQL.
+## Instalación rápida
 
-## Instalación
+1) Clona el repositorio y entra en la carpeta:
 
-Sigue estos pasos para instalar y ejecutar el proyecto localmente:
+```bash
+git clone git@github.com:ismaeltorresh/neec-backend.git
+cd neec-backend
+```
 
-1. **Clona este repositorio**:
+2) Instala dependencias:
 
-   ```
-   bash
-   git clone git@github.com:ismaeltorresh/neec-backend.git  
-   ```
+```bash
+npm install
+```
 
-2. **Navega al directorio del proyecto**:
+3) Variables de entorno (ejemplo mínimo): crea un `.env` o exporta las variables necesarias antes de ejecutar.
 
-    ```
-    bash
-    cd neec-backend
-    ```
+Ejemplo mínimo:
 
-3. **Instala las dependencias necesarias**:
+```
+PORT=3000
+DATABASE_URL=mysql://user:pass@host:3306/dbname
+execution=development
+```
 
-    ```
-    bash
-    npm install
-    ```
+4) Ejecuta en modo desarrollo:
 
-4. **Configuración:**
+```bash
+npm run dev
+```
 
-   El proyecto requiere variables de entorno. Crea un archivo `.env` en la raíz del proyecto y añade lo siguiente:
-
-    PORT=3000
-    DATABASE_URL=postgres://usuario:contraseña@host:puerto/nombre_base_datos
-    JWT_SECRET=tu_secreto_jwt
-
-    * `PORT`: Puerto del servidor (default: 3000).
-    * `DATABASE_URL`: URL de conexión a PostgreSQL.
-    * `JWT_SECRET`: Clave secreta para JWT.
-
-5. **Ejecución:**
-
-   Para iniciar el servidor en modo desarrollo:
-
-    ```
-    bash
-    npm run dev
-    ```
-
-   El servidor estará disponible en `http://localhost:3000`.
-
-   Para producción, primero compila y luego inicia:
-
-    ```
-    bash
-    npm run build
-    npm start
-    ```
+El servidor por defecto monta las rutas bajo `http://localhost:3000/api/v1/`.
 
 ## Scripts disponibles
 
-- `npm run dev`: Inicia el servidor en modo desarrollo.
-- `npm run build`: Compila para producción.
-- `npm start`: Inicia el servidor en modo producción.
+- `npm run dev` - ejecuta con nodemon en modo development (usa variables cross-env definidas en package.json).
+- `npm start` - inicia en modo producción.
+- `npm run build` - empaqueta con webpack.
 
-## Estructura del proyecto
+## Convenciones y helpers importantes
 
-El proyecto tiene la siguiente estructura:
+- Validación: los endpoints usan `Joi` y el middleware `middlewares/validator.handler.js` para validar `body`, `query` o `params` según el esquema exportado en `schemas/*`.
+- Paginación: las rutas de listado devuelven `{ data, meta }`. Hay dos helpers:
+  - `utils/response.js::paginated(array, page, pageSize)` para arrays en memoria (fake).
+  - `utils/pagination.js::sqlPaginate(options)` para paginación segura en SQL.
+- Mock NoSQL: `utils/nosqlMock.js` permite simular `list`, `findById` y `paginateList` a partir de `test/fakedata.json`.
 
-neec-backend/
-│
-├── index.js          # Punto de entrada
-├── routes/           # Rutas de la API
-├── controllers/      # Lógica de las rutas
-├── middlewares/      # Middlewares
-├── models/           # Modelos de datos
-├── schemas/          # Esquemas de validación
-└── config/           # Configuración
+## Parámetros comunes en consultas (query params)
 
-## Contribuciones
+- `dataSource` (required en las validaciones): `sql` | `nosql` | `fake` | `both`.
+- `page`, `pageSize` (paginación). Defaults: `page=1`, `pageSize=10`.
+- `q` (búsqueda por texto sobre columnas configuradas por recurso).
+- `sortBy`, `sortDir` (orden seguro - solo campos permitidos por recurso).
+- Filtros específicos por recurso (por ejemplo `brand`, `sku`, `nameOne`, `city`, etc.).
 
-Las contribuciones son bienvenidas.  Sigue estos pasos:
+## Endpoints por recurso (resumen)
 
-1. Haz un fork del repositorio.
-2. Crea una nueva rama (`git checkout -b nombre-de-tu-rama`).
-3. Realiza tus cambios y haz commits descriptivos.
-4. Envía tus cambios (`git push origin nombre-de-tu-rama`).
-5. Abre un Pull Request describiendo tus cambios.
+Base URL: `http://localhost:3000/api/v1`
 
-## Licencia
+- Products (`/products`)
+  - GET /products
+    - Query: `dataSource`, `page`, `pageSize`, `q`, `brand`, `categoryId`, `sku`, `code`, `recordStatus`, `sortBy`, `sortDir`.
+    - Retorna `{ data, meta }` o estructura combinada para `both`.
+  - GET /products/schema - devuelve el esquema cuando `execution=development`.
+  - GET /products/:id - obtiene 1 registro por `id` (usa `dataSource` en query).
+  - POST /products - crea un recurso (body validado por `schemas/products.schema.js`).
+  - PUT /products/:id - actualiza un recurso (body validado por `update` schema).
+  - DELETE /products/:id - elimina (body validado por `del` schema`).
 
-Este proyecto está licenciado bajo la Licencia MIT (ver archivo `LICENSE`).
+- People (`/people`) — (mismo patrón que products)
+  - GET /people
+  - GET /people/schema
+  - GET /people/:id
+  - POST /people
+  - PUT /people/:id
+  - DELETE /people/:id
 
-Desarrollado y mantenido por [ismaeltorresh](https://github.com/ismaeltorresh).
+- Address (`/address`) — (mismo patrón)
+  - GET /address
+  - GET /address/schema
+  - GET /address/:id
+  - POST /address
+  - PUT /address/:id
+  - DELETE /address/:id
 
-## **Convensiones:** ##
+- Blogs (`/blogs`)
+  - POST /blogs/posts - crea un post (body libre en el router actual).
+  - GET /blogs/posts - lista posts (mocked en router).
+  - GET /blogs/posts:postId - obtiene post por id (router incompleto, revisar si se planea usar).
+  - GET /blogs/schema - devuelve un esquema simplificado cuando `execution=development`.
 
-### Nombres de los campos ###
+- Users (`/users`)
+  - GET /users - listado (soporta `sql` y paginación con filtros `userName`, `email`, `role`, `status`).
+  - GET /users/datamodel - devuelve el datamodel cuando `execution=development`.
+  - GET /users/:id
+  - POST /users - crea usuario (validado por `schemas/users.schema.js`).
+  - PATCH /users/:id - actualiza parcialmente (validaciones aplicadas en params).
+  - DELETE /users/:id - elimina (validado por `usersDelete`).
 
-1. **Seguir una convención de nombres consistente**
-    - **CamelCase**: `clientName`, `creationDate`.
-    - No usar espacios en nombres de columnas o campos.
+- Template (`/template`)
+  - GET /template
+  - GET /template/schema
+  - GET /template/:id
+  - POST /template
+  - PUT /template/:id
+  - DELETE /template/:id
+  - Nota: este recurso incluye ejemplos de uso de la conexión SQL (`db/connection.js`) y algunos queries directos en el router.
 
-2. **Usar nombres significativos y descriptivos**
-    - Evita abreviaciones innecesarias.
-    - Prefiere `creationDate` en lugar de `cd`.
-    - Usa nombres que indiquen el propósito del campo (`useUi` en lugar de `idUser`).
+## Ejemplos de uso (cURL)
 
-3. **No incluir el tipo de dato en el nombre**
-    - `userName`, no `userNameStr`.
-    - Si el tipo cambia en el futuro, el nombre seguirá siendo válido.
-
-4. **Usar prefijos solo cuando sea necesario**
-    - Evita redundancias: en una tabla `clients`, no llames a un campo `clientName`, solo `name`.
-    
-5. **Usar nombres en singular**
-    - La tabla representa una colección, pero las columnas representan una propiedad de una entidad:
-        - Tabla: `users`, columna: `email`.
-
-6. **Utilizar convenciones estándar para claves primarias y foráneas**
-    - Para claves primarias: `id` o `userId`.
-    - Para claves foráneas: usa el nombre de la tabla seguida de `Id`: `userId`, `clientId`.
-    
-7. **Evitar palabras reservadas de SQL**
-    - Ejemplo: `date`, `order`, `select`.
-
-8. **No mezclar idiomas**
-    - Usa nombres en inglés (`customerId`).
-
-9. **No hacer nombres demasiado largos**
-    - MongoDB, Firebase y otras bases de datos basadas en documentos almacenan los nombres de los campos junto con los datos, lo que puede aumentar el tamaño del documento.
-
-10. **Estructurar correctamente los datos anidados**
-    - En bases de datos NoSQL como MongoDB, es común anidar objetos en lugar de usar relaciones:
-      ```
-      {
-        "userId": 123,
-        "profile": {
-          "firstName": "Carlos",
-          "lastName": "Hernández"
-        }
-      }
-      ```
-
-11. **Campos obligatorios**
-    - Todos los schemas deben contener los siguientes campos:
-    ```
-    const schemaName = {
-      createdAt: Joi.date().timestamp(), // FECHA Y HORA DE CREACIÓN
-      dataSource: Joi.string(), // EL ORIGEN O DESTINO DE LOS DATOS EJE: SQL | NOSQL | BOTH
-      id: Joi.string().uuid(), // IDENTIFICADOR ÚNICO
-      recordStatus: Joi.boolean(), // INDICA SI EL REGISTRO SE PUEDE MOSTRAR O NO
-      updatedAt: Joi.date().timestamp(), // FECHA Y HORA DE ACTUALIZACIÓN
-      updatedBy: Joi.string().uuid(), // ID DEL USUARIO QUE MODIFICÓ
-      useAs: Joi.string(), // EL USO QUE LE DARÁS EJE: CONTACT | 
-    }
-    ```
-
-## Formato de respuestas paginadas
-
-Este proyecto expone endpoints de listado que devuelven un objeto estandarizado con la forma:
-
-```json
-{
-    "data": [ /* array de elementos */ ],
-    "meta": {
-        "total": 123,
-        "page": 1,
-        "pageSize": 10,
-        "totalPages": 13
-    }
-}
-```
-
-Helper disponible
-- `utils/response.js` exporta la función `paginated(dataArray, page, pageSize)` que devuelve exactamente la estructura anterior (`{ data, meta }`).
-
-Uso en rutas
-- Para fuentes `fake` (archivo `test/fakedata.json`) y para datos en memoria, se utiliza `paginated(...)` para construir la respuesta.
-- Los endpoints que realizan paginación en SQL usan `utils/pagination.js` (exporta `sqlPaginate`) que devuelve `{ data, meta }`. El helper `paginated` se usa cuando la fuente es un array local.
-
-## Utilidades de paginación (utils/pagination.js)
-
-Este archivo exporta dos helpers principales para unificar la paginación en el proyecto:
-
-- `paginate(items, page = 1, pageSize = 10)`
-    - Uso: paginar arrays en memoria o datos fake.
-    - Entrada: `items` (Array), `page` (número, 1-based), `pageSize` (número).
-    - Salida: `{ data: Array, meta: { total, page, pageSize, totalPages } }`.
-
-- `sqlPaginate(options)`
-    - Uso: paginar resultados de consultas SQL usando `COUNT(*)` + `SELECT ... LIMIT ... OFFSET ...`.
-    - Firma (opciones principales):
-        - `table` (string, required): nombre de la tabla (solo alfanumérico y guiones bajos).
-        - `recordStatus` (boolean|number|string): valor para `:recordStatus` en el WHERE (soporta 'true'/'false' y '1'/'0').
-        - `page` (number), `pageSize` (number)
-        - `columns` (string): columnas a seleccionar (por ejemplo `id, name` o `*`).
-        - `whereClause` (string): cláusula WHERE base (ej. `recordStatus = :recordStatus`).
-        - `replacements` (object): replacements adicionales para la consulta.
-        - `filters` (object) / `allowedFilters` (array): permite filtrar por columnas permitidas; soporta comodines (`*`) que se convierten a `%` para LIKE.
-        - `search` ({ q, columns }): búsqueda simple con LIKE sobre columnas listadas.
-        - `orderBy` (string) o `sortBy` + `sortDir` + `allowedSorts` para orden seguro.
-
-    - Retorna: `{ data: Array, meta: { total, page, pageSize, totalPages } }`.
-
-Ejemplo mínimo (ruta Express usando SQL):
-
-```js
-const { sqlPaginate } = require('../utils/pagination');
-
-const result = await sqlPaginate({
-    table: 'products',
-    page: 1,
-    pageSize: 10,
-    filters: { brand: 'Acme' },
-    allowedFilters: ['brand', 'sku'],
-    search: { q: 'auricular', columns: ['description','brand'] },
-    sortBy: 'price',
-    sortDir: 'ASC',
-    allowedSorts: ['price','createdAt','updatedAt'],
-});
-
-res.json(result); // { data, meta }
-```
-
-Ejemplo (en una ruta Express):
-
-```js
-const { paginated } = require('../utils/response');
-const items = getItemsFromFake();
-const page = req.query.page || 1;
-const pageSize = req.query.pageSize || 10;
-res.json(paginated(items, page, pageSize));
-```
-
-## Ejemplos avanzados
-
-Los endpoints de listado soportan combinaciones de paginación, filtros, búsqueda por texto y ordenación restringida a campos permitidos.
-
-1) Paginación simple (page, pageSize)
-
-curl:
+- Listar `people` usando datos fake (paginado):
 
 ```bash
-curl "http://localhost:3000/people?dataSource=fake&page=2&pageSize=5"
+curl "http://localhost:3000/api/v1/people?dataSource=fake&page=1&pageSize=5"
 ```
 
-2) Filtros exactos
-
-Ejemplo: buscar productos por `brand` y `sku`:
+- Buscar `products` por marca y ordenar:
 
 ```bash
-curl "http://localhost:3000/products?dataSource=fake&brand=Acme&sku=ACM-001"
+curl "http://localhost:3000/api/v1/products?dataSource=fake&brand=Acme&page=1&pageSize=10&sortBy=price&sortDir=ASC"
 ```
 
-3) Filtros con wildcard
-
-Puedes usar `*` para indicar comodines (el backend convierte `*` a `%` para búsquedas SQL cuando aplique):
+- Obtener un `template` por id (SQL):
 
 ```bash
-curl "http://localhost:3000/people?dataSource=fake&nameOne=Mar*"
+curl "http://localhost:3000/api/v1/template/123e4567-e89b-12d3-a456-426614174000?dataSource=sql"
 ```
 
-4) Búsqueda por texto (`q`)
-
-Ejemplo: búsqueda en columnas configuradas para el recurso (p.ej. `nameOne`, `slug`):
+- Crear un `product` (ejemplo mínimo — body requiere fields según `schemas/products.schema.js`):
 
 ```bash
-curl "http://localhost:3000/people?dataSource=fake&q=maria"
+curl -X POST "http://localhost:3000/api/v1/products" \
+  -H "Content-Type: application/json" \
+  -d '{"dataSource":"sql","createdAt":1690000000,"id":"uuid-1234","recordStatus":true,"updatedAt":1690000000,"updatedBy":"uuid-user","useAs":"test","sumary":"Resumen","price":123.45}'
 ```
 
-5) Ordenación segura
+## Validación y errores
 
-Usa `sortBy` y `sortDir` (solo campos permitidos). Si `sortBy` no está en la lista blanca, el helper rechazará la petición.
+- Los esquemas de validación están en `schemas/*.schema.js` y se aplican mediante `validator.handler.js`.
+- Cuando la validación falla el middleware devuelve un error 400 con detalles del `Joi` error envuelto por `boom.badRequest`.
+- Para errores internos se usa `boom.internal` y para condiciones de autorización/ambiente incorrecto se usan `boom.forbidden` o `boom.badRequest` según el caso.
+
+## Testing y Mocks
+
+- Tests unitarios y de integración usan `jest` y `supertest` (revisa `test/*.test.js`).
+- Para pruebas sin base de datos se usa `utils/nosqlMock.js` y `test/fakedata.json`.
+
+## Notas operativas y buenas prácticas
+
+- En desarrollo, las rutas `/schema` y `/datamodel` devuelven los esquemas de validación cuando `execution=development`.
+- `dataSource=both` devuelve un objeto con versiones `sql` y `nosql` (o un placeholder) útil para comparar resultados.
+- Reemplaza `nosqlMock` por la integración real con tu base de datos NoSQL en producción.
+
+## Siguientes pasos recomendados
+
+- Añadir documentación OpenAPI/Swagger a partir de los esquemas Joi (automatizable).
+- Implementar control de autenticación/autorization (actualmente hay dependencias para JWT/OAuth en `package.json` pero los routers no integran auth en todas las rutas).
+- Completar endpoints de `blogs` (ruta `/posts:postId` parece incompleta).
+
+---
+
+Si quieres, puedo añadir una sección OpenAPI mínima o generar ejemplos Postman/Insomnia exportables a partir de los esquemas actuales. ¿Quieres que lo haga ahora?
+
+## OpenAPI (especificación generada)
+
+He generado una especificación OpenAPI mínima en `docs/openapi.yaml` basada en los esquemas y rutas actuales. Puedes usarla con varias herramientas para visualizar o generar clientes.
+
+Opciones rápidas para visualizarla localmente:
+
+- Usando Redoc (instala globalmente o en el proyecto):
 
 ```bash
-curl "http://localhost:3000/products?dataSource=fake&sortBy=price&sortDir=DESC"
+npx redoc-cli serve docs/openapi.yaml
 ```
 
-6) Combinación (filtros + búsqueda + paginación + orden)
+- Usando Swagger UI (servir un HTML que cargue `docs/openapi.yaml`) o la extensión de VS Code "Swagger Viewer" para abrir el archivo directamente.
+
+Si quieres, genero una versión más completa (modelos con todos los campos, ejemplos de request/response y auth) y añado una ruta `/docs` que sirva Swagger UI. ¿Lo agrego ahora?
+
+También existe una versión más completa `docs/openapi-full.yaml` que incluye componentes detallados, ejemplos y un `securityScheme` JWT (bearer). Para visualizarla con Redoc:
 
 ```bash
-curl "http://localhost:3000/products?dataSource=fake&brand=Acme&q=auriculares&page=1&pageSize=10&sortBy=price&sortDir=ASC"
+npx redoc-cli serve docs/openapi-full.yaml
 ```
 
-7) Ejemplo en Node.js (fetch)
+O con Swagger UI local (por ejemplo usando `swagger-ui-dist` o `swagger-ui-express` en una ruta `/docs`).
 
-```js
-const fetch = require('node-fetch');
-async function getProducts() {
-    const url = 'http://localhost:3000/products?dataSource=fake&brand=Acme&page=1&pageSize=10';
-    const res = await fetch(url);
-    const body = await res.json();
-    console.log('data length', body.data.length);
-    console.log('meta', body.meta);
-}
-getProducts();
+Para facilitar el acceso, añadí un script que sirve Swagger UI en `http://localhost:3001/docs` usando el archivo completo.
+
+Pasos:
+
+```bash
+# Instala dependencias nuevas (si no las tienes aún)
+npm install
+
+# Sirve la documentación en http://localhost:3001/docs
+npm run docs
 ```
 
-Notas
-- Las rutas SQL usan `utils/pagination.js` (exporta `sqlPaginate`) que devuelve `{ data, meta }`.
-- Para fuentes locales (`fake`), se utiliza `utils/response.js::paginated` para garantizar el mismo contrato.
+Si prefieres montar `/docs` en el servidor principal (`http://localhost:3000/docs`) puedo integrarlo en `index.js` en su lugar.
 
-## Uso de `nosqlMock` en pruebas
+He integrado `/docs` en el servidor principal. Comportamiento:
 
-Para facilitar pruebas locales sin una base de datos NoSQL real, existe el helper `utils/nosqlMock.js` que lee `test/fakedata.json` y expone las funciones:
+- En `development` la ruta `/docs` está abierta (no requiere token).
+- En `production` la ruta `/docs` está protegida: debes enviar el header `X-DOCS-TOKEN` con el valor de la variable de entorno `DOCS_TOKEN` o pasar `?docsToken=...` en la query.
 
-- `list(serviceName)` - devuelve el array del servicio (p.ej. 'people', 'products').
-- `findById(serviceName, id)` - busca un registro por id o devuelve `null`.
-- `paginateList(serviceName, page, pageSize, filters, search)` - devuelve `{ data, meta }` y soporta filtros y búsqueda.
+Ejemplo (producción, con token):
 
-Filtros:
-- `filters` es un objeto con pares `campo: valor`. Los valores pueden incluir comodines `*` o `%` (ej. `{ nameOne: '*Mar*' }`).
-
-Search:
-- `search` es `{ q: 'termino', columns: ['col1','col2'] }` y realiza una búsqueda por substring (case-insensitive) en las columnas indicadas.
-
-Ejemplo de uso en tests (Jest):
-
-```js
-const nosqlMock = require('../utils/nosqlMock');
-
-test('mock nosql paginate with filters and search', () => {
-    const filters = { useAs: 'supplier' };
-    const search = { q: 'juan', columns: ['nameOne', 'slug'] };
-    const res = nosqlMock.paginateList('people', 1, 10, filters, search);
-    expect(res).toHaveProperty('data');
-    expect(res).toHaveProperty('meta');
-});
+```bash
+curl -H "X-DOCS-TOKEN: tu_token_aqui" http://localhost:3000/docs
 ```
 
-Ejemplo de cómo las rutas consumen estos parámetros (request):
+Para configurar el token en tu entorno, añade por ejemplo a tu `.env`:
 
 ```
-GET /api/v1/people?dataSource=nosql&page=1&pageSize=10&nameOne=*Mar*&q=madrid
+DOCS_TOKEN=mi_super_secreto_docs_token
 ```
 
-En ese caso la ruta pasará los query params a `nosqlMock.paginateList('people', page, pageSize, filters, search)` y devolverá la respuesta en el formato `{ data, meta }`.
-
-Notas:
-- `nosqlMock` está pensado para pruebas y desarrollo local; para producción debes reemplazarlo por la integración con la base de datos NoSQL real.
+Si prefieres otra estrategia (IP whitelist, basic auth, etc.) dímelo y lo adapto.
 
 
 

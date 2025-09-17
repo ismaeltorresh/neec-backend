@@ -1,0 +1,482 @@
+openapi: "3.1.0"
+info:
+  title: "NEEC Backend API (Minimal OpenAPI)"
+  version: "1.0.0"
+  description: "Minimal OpenAPI spec generated from Joi schemas and routes in the repository. Covers main resources: products, people, address, users, template, blogs."
+servers:
+  - url: http://localhost:3000/api/v1
+paths:
+  /products:
+    get:
+      summary: List products
+      parameters:
+        - name: dataSource
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sql, nosql, fake, both]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: brand
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paged products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProducts'
+    post:
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '201':
+          description: Created
+  /products/{id}:
+    get:
+      summary: Get product by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: dataSource
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sql, nosql, fake, both]
+      responses:
+        '200':
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    put:
+      summary: Update product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataSource:
+                  type: string
+                  enum: [sql, nosql, fake, both]
+                id:
+                  type: string
+                recordStatus:
+                  type: boolean
+                updatedAt:
+                  type: integer
+                updatedBy:
+                  type: string
+      responses:
+        '200':
+          description: Deleted
+
+  /people:
+    get:
+      summary: List people
+      parameters:
+        - name: dataSource
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sql, nosql, fake, both]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paged people
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPeople'
+    post:
+      summary: Create person
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Person'
+      responses:
+        '201':
+          description: Created
+  /people/{id}:
+    get:
+      summary: Get person by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: dataSource
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sql, nosql, fake, both]
+      responses:
+        '200':
+          description: Person
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+    put:
+      summary: Update person
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Person'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete person
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataSource:
+                  type: string
+                  enum: [sql, nosql, fake, both]
+                id:
+                  type: string
+                recordStatus:
+                  type: boolean
+                updatedAt:
+                  type: integer
+                updatedBy:
+                  type: string
+      responses:
+        '200':
+          description: Deleted
+
+  /address:
+    get:
+      summary: List addresses
+      parameters:
+        - name: dataSource
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sql, nosql, fake, both]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paged addresses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAddress'
+
+  /users:
+    get:
+      summary: List users
+      parameters:
+        - name: dataSource
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sql, nosql, fake, both]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paged users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Created
+
+  /template:
+    get:
+      summary: List templates
+      parameters:
+        - name: dataSource
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sql, nosql, fake, both]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paged templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTemplate'
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        dataSource:
+          type: string
+          enum: [sql, nosql, fake, both]
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+        updatedBy:
+          type: string
+        recordStatus:
+          type: boolean
+        brand:
+          type: string
+        categoryId:
+          type: string
+        code:
+          type: string
+        sku:
+          type: string
+        price:
+          type: number
+        sumary:
+          type: string
+        photoUrl:
+          type: string
+          format: uri
+    Person:
+      type: object
+      properties:
+        id:
+          type: string
+        dataSource:
+          type: string
+          enum: [sql, nosql, fake, both]
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+        recordStatus:
+          type: boolean
+        nameOne:
+          type: string
+        nameTwo:
+          type: string
+        identificationNumber:
+          type: string
+        identificationType:
+          type: string
+    Address:
+      type: object
+      properties:
+        id:
+          type: string
+        dataSource:
+          type: string
+          enum: [sql, nosql, fake, both]
+        city:
+          type: string
+        country:
+          type: string
+        slug:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        userName:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        status:
+          type: string
+        dataSource:
+          type: string
+          enum: [sql, nosql, fake, both]
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        useAs:
+          type: string
+        dataSource:
+          type: string
+          enum: [sql, nosql, fake, both]
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    PaginatedProducts:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            totalPages:
+              type: integer
+    PaginatedPeople:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+        meta:
+          $ref: '#/components/schemas/PaginatedProducts/properties/meta'
+    PaginatedAddress:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        meta:
+          $ref: '#/components/schemas/PaginatedProducts/properties/meta'
+    PaginatedUsers:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        meta:
+          $ref: '#/components/schemas/PaginatedProducts/properties/meta'
+    PaginatedTemplate:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Template'
+        meta:
+          $ref: '#/components/schemas/PaginatedProducts/properties/meta'

@@ -9,7 +9,8 @@
     "start": "cross-env NODE_ENV=production AUDIENCE=https://api.loha.mx ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/ node index.js",
     "prod": "cross-env NODE_ENV=production AUDIENCE=https://api.loha.mx ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/ node dist/index.bundle.js",
     "lint": "eslint",
-    "build": "webpack --config webpack.config.js"
+    "build": "webpack --config webpack.config.js",
+    "docs": "node tools/serve-docs.js"
   },
   "repository": {
     "type": "git",
@@ -45,6 +46,8 @@
     "mariadb": "^3.4.2",
     "mysql2": "^3.14.0",
     "sequelize": "^6.37.7"
+    ,
+    "swagger-ui-express": "^4.6.3"
   }
   
 }
