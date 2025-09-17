@@ -10,10 +10,10 @@ const router = express.Router();
 const connection = sequelize; // Connection to SQL database
 
 router.get('/schema', (req, res, next) => {
-  if (env.execution === 'development') {
+  if (process.env.execution === 'development') {
     res.status(200).json(schema);
   } else {
-    next(boom.forbidden('You do not have the correct execution environment'));
+    next(boom.forbidden('I don’t have a correct execution environment'));
   }
 });
 
@@ -26,25 +26,39 @@ router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
   try {
     let results = {};
     if (inputData.dataSource === 'sql' || inputData.dataSource === 'both') {
-      let [rows] = await connection.query('SELECT * FROM template WHERE recordStatus = ?', {
-        replacements: [inputData.recordStatus],
-        type: connection.QueryTypes.SELECT,
+      const { sqlPaginate } = require('../utils/sqlPagination');
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      const filters = {
+        useAs: inputData.useAs,
+        slug: inputData.slug,
+      };
+      const search = inputData.q ? { q: inputData.q, columns: ['useAs','slug'] } : undefined;
+      const result = await sqlPaginate({
+        table: 'template',
+        recordStatus: inputData.recordStatus,
+        page,
+        pageSize,
+        columns: '*',
+        orderBy: 'updatedAt DESC',
+        filters,
+        allowedFilters: ['useAs','slug'],
+        search,
+        sortBy: inputData.sortBy,
+        sortDir: inputData.sortDir,
+        allowedSorts: ['updatedAt','createdAt','useAs'],
       });
-      rows = typeof rows !== 'object' ? rows : [rows];
-      if (rows) {
-        results.sql = rows.map(row => ({
-          ...row
-        }));
-      } else{
-        next(boom.notFound('No records found'));
-      }
+      results.sql = result;
     } else if (inputData.dataSource === 'nosql') {
       // Code to fetch data from the NoSQL database
       results.nosql = [{}];
     } else {
       next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
+      return;
     }
+    res.status(200).json(results);
   } catch (error) {
+    if (error && error.isBoom) return next(error);
     console.error(error);
     next(boom.internal(`Error retrieving data from the ${service} service`));
   }
@@ -77,8 +91,9 @@ router.get('/:id', validatorHandler(get, 'query'), async (req, res, next) => {
     } else {
       next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
     }
-    res.status(200).json(results);
+  res.status(200).json(results);
   } catch (error) {
+    if (error && error.isBoom) return next(error);
     console.error(error);
     next(boom.internal(`Error retrieving the data from the ${service} service`));
   }
@@ -98,7 +113,7 @@ router.post('/', validatorHandler(post, 'body'), async (req, res, next) => {
         }
       );
       results = {
-        message: 'created',
+        message: 'Created',
         body: inputData,
         id: result.insertId
       };
@@ -132,7 +147,7 @@ router.put('/:id', validatorHandler(update, 'body'), async (req, res, next) => {
         return;
       }
       results = {
-        message: 'updated',
+        message: 'Updated',
         data: inputData
       };
     } else if (inputData.dataSource === 'nosql') {
@@ -160,7 +175,7 @@ router.delete('/:id', validatorHandler(del, 'body'), async (req, res, next) => {
         return;
       }
       results = {
-        message: 'Eliminado',
+        message: 'Deleted',
         data: inputData
       };
     } else if (inputData.dataSource === 'nosql') {

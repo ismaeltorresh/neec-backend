@@ -50,6 +50,9 @@ const get = Joi.object({
   dataSource: schema.dataSource.required(),
   recordStatus: schema.recordStatus.required(),
   id: schema.id.required(),
+  // Pagination
+  page: Joi.number().integer().min(1).default(1),
+  pageSize: Joi.number().integer().min(1).max(100).default(10),
 });
 
 const del = Joi.object({

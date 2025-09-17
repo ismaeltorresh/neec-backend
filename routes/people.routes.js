@@ -4,6 +4,7 @@ const express = require('express');
 const validatorHandler = require('../middlewares/validator.handler');
 const {schema, get, del, post, update} = require('../schemas/people.schema');
 const service = 'people';
+const { paginate } = require('../utils/pagination');
 
 
 const router = express.Router();
@@ -23,20 +24,36 @@ router.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My intentionally Sentry error! is only test");
 });
 
-router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
+router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
   const inputData = req.query;
   try {
     if (inputData.dataSource === 'sql') {
-      // Code to get data from sql data base
-      results = [{
-        createdAt: 1698765432,
-        dataSource: 'sql',
-        id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
-        recordStatus: true,
-        updatedAt: 1698765432,
-        updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
-        useAs: 'test',
-      }];
+      const { sqlPaginate } = require('../utils/sqlPagination');
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      // Extract filters and search from query
+      const filters = {
+        nameOne: inputData.nameOne,
+        nameTwo: inputData.nameTwo,
+        slug: inputData.slug,
+        identificationNumber: inputData.identificationNumber,
+      };
+      const search = inputData.q ? { q: inputData.q, columns: ['nameOne', 'nameTwo', 'slug', 'identificationNumber'] } : undefined;
+      const result = await sqlPaginate({
+        table: 'people',
+        recordStatus: inputData.recordStatus,
+        page,
+        pageSize,
+        columns: '*',
+        orderBy: 'updatedAt DESC',
+        filters,
+        allowedFilters: ['nameOne', 'nameTwo', 'slug', 'identificationNumber'],
+        search,
+        sortBy: inputData.sortBy,
+        sortDir: inputData.sortDir,
+        allowedSorts: ['updatedAt','createdAt','nameOne','nameTwo'],
+      });
+      return res.status(200).json(result);
     } else if (inputData.dataSource === 'fake') {
       const fake = require('../test/fakedata.json');
       results = fake.people || [];
@@ -54,11 +71,17 @@ router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
         boom.forbidden(`${inputData.dataSource} not is a valid data source`)
       );
     }
-    res.status(200).json(results);
+
+    if (Array.isArray(results)) {
+      const page = inputData.page || 1;
+      const pageSize = inputData.pageSize || 10;
+      res.status(200).json(paginate(results, page, pageSize));
+    } else {
+      res.status(200).json(results);
+    }
   } catch (error) {
-    next(
-      boom.forbidden(`Failed to retrieve all data from the ${service} service`)
-    );
+    if (error && error.isBoom) return next(error);
+    next(boom.internal(`Failed to retrieve all data from the ${service} service`));
   }
 });
 

@@ -22,34 +22,32 @@ const schema = {
 
 
 const del = Joi.object({
-  // ** Start recommended required fields **
   dataSource: schema.dataSource.required(),
   id: schema.id.required(),
-  recordStatus: schema.recordStatus.valid(false).required(),
+  recordStatus: schema.recordStatus.valid(0, 1).required(),
   updatedAt: schema.updatedAt.required(),
   updatedBy: schema.updatedBy.required(),
-  // ** Start recommended required fields **
 });
 
 const get = Joi.object({
-  // ** Start recommended required fields **
   dataSource: schema.dataSource.required(),
   recordStatus: schema.recordStatus.required(),
-  // ** Ends recommended required fields **
+  // optional pagination for list endpoints
+  page: Joi.number().integer().min(1).default(1),
+  pageSize: Joi.number().integer().min(1).max(100).default(10),
+  // allow id if requesting a single item
+  id: schema.id,
 });
 
 const update = Joi.object({
-  // ** Start recommended required fields **
   dataSource: schema.dataSource.required(),
   id: schema.id.required(),
   updatedAt: schema.updatedAt.required(),
   updatedBy: schema.updatedBy.required(),
   recordStatus: schema.recordStatus.required(),
-  // ** Ends recommended required fields **
 });
 
 const post = Joi.object({
-  // ** Start recommended required fields **
   createdAt: schema.createdAt.required(),
   dataSource: schema.dataSource.required(),
   id: schema.id.required(),
@@ -57,8 +55,9 @@ const post = Joi.object({
   updatedAt: schema.updatedAt.required(),
   updatedBy: schema.updatedBy.required(),
   useAs: schema.useAs.required(),
-  // ** Ends recommended required fields **
 });
+
+// (duplicate declarations removed)
 
 module.exports = {
   schema,

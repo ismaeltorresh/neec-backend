@@ -4,6 +4,7 @@ const express = require('express');
 const validatorHandler = require('../middlewares/validator.handler');
 const {schema, get, del, post, update} = require('../schemas/address.schema');
 const service = 'address';
+const { paginate } = require('../utils/pagination');
 
 
 const router = express.Router();
@@ -23,23 +24,37 @@ router.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My intentionally Sentry error! is only test");
 });
 
-router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
+router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
   const inputData = req.query;
   try {
     if (inputData.dataSource === 'sql') {
-      // Code to get data from sql data base
-      results = [{
-        createdAt: 1698765432,
-        dataSource: 'sql',
-        id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
-        recordStatus: true,
-        updatedAt: 1698765432,
-        updatedBy: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f',
-        useAs: 'test',
-      }];
+      const { sqlPaginate } = require('../utils/sqlPagination');
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      const filters = {
+        city: inputData.city,
+        country: inputData.country,
+        slug: inputData.slug,
+      };
+      const search = inputData.q ? { q: inputData.q, columns: ['city','country','slug','useAs'] } : undefined;
+      const result = await sqlPaginate({
+        table: 'address',
+        recordStatus: inputData.recordStatus,
+        page,
+        pageSize,
+        columns: '*',
+        orderBy: 'updatedAt DESC',
+        filters,
+        allowedFilters: ['city','country','slug'],
+        search,
+        sortBy: inputData.sortBy,
+        sortDir: inputData.sortDir,
+        allowedSorts: ['updatedAt','createdAt','city','country'],
+      });
+      return res.status(200).json(result);
     } else if (inputData.dataSource === 'fake') {
-  // Read fake data from test/fakedata.json
-  const fake = require('../test/fakedata.json');
+      // Read fake data from test/fakedata.json
+      const fake = require('../test/fakedata.json');
       results = fake.address || [];
     } else if (inputData.dataSource === 'nosql') {
       // Code to get data from nosql data base
@@ -54,12 +69,18 @@ router.get('/', validatorHandler(get, 'query'), (req, res, next) => {
       next(
         boom.forbidden(`${inputData.dataSource} not is a valid data source`)
       );
+      return;
     }
-    res.status(200).json(results);
+    if (Array.isArray(results)) {
+      const page = inputData.page || 1;
+      const pageSize = inputData.pageSize || 10;
+      res.status(200).json(paginate(results, page, pageSize));
+    } else {
+      res.status(200).json(results);
+    }
   } catch (error) {
-    next(
-      boom.forbidden(`Failed to retrieve all data from the ${service} service`)
-    );
+    if (error && error.isBoom) return next(error);
+    next(boom.internal(`Failed to retrieve all data from the ${service} service`));
   }
 });
 

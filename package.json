@@ -36,6 +36,7 @@
     "@hapi/boom": "^10.0.1",
     "@sentry/node": "^8.32.0",
     "@sentry/profiling-node": "^8.32.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-oauth2-jwt-bearer": "^1.6.0",
@@ -45,4 +46,5 @@
     "mysql2": "^3.14.0",
     "sequelize": "^6.37.7"
   }
+  
 }

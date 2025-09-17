@@ -23,14 +23,48 @@ router.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My intentionally Sentry error! is only test");
 });
 
-router.get('/', (req, res, next) => {
+router.get('/', validatorHandler(usersGet, 'query'), async (req, res, next) => {
   try {
+    const inputData = req.query;
+    // If client requests SQL source, run paginated query
+    if (inputData.dataSource === 'sql') {
+      const { sqlPaginate } = require('../utils/sqlPagination');
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      const filters = {
+        userName: inputData.userName,
+        email: inputData.email,
+        role: inputData.role,
+        status: inputData.status,
+      };
+      const search = inputData.q ? { q: inputData.q, columns: ['userName','email'] } : undefined;
+      const result = await sqlPaginate({
+        table: 'users',
+        recordStatus: inputData.recordStatus,
+        page,
+        pageSize,
+        columns: 'id, userName, email, role, status, recordStatus, updatedAt',
+        orderBy: 'updatedAt DESC',
+        filters,
+        allowedFilters: ['userName','email','role','status'],
+        search,
+        sortBy: inputData.sortBy,
+        sortDir: inputData.sortDir,
+        allowedSorts: ['updatedAt','createdAt','userName','email'],
+      });
+      return res.status(200).json(result);
+    }
+
+    // Fallback: return empty paginated result
     results = [];
-    res.status(200).json(results);
+    const { paginate } = require('../utils/pagination');
+    const page = req.query.page || 1;
+    const pageSize = req.query.pageSize || 10;
+    const all = [];
+    res.status(200).json(paginate(all, page, pageSize));
   } catch (error) {
-    next(
-      boom.forbidden('I don’t have a correct execution environment')
-    );
+    if (error && error.isBoom) return next(error);
+    next(boom.internal('I don’t have a correct execution environment'));
   }
 });
 

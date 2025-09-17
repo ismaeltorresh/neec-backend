@@ -9,12 +9,11 @@ const env = require('./environments');
 const express = require('express');
 const helmet = require('helmet');
 const perfTimeout = require('./middlewares/perf.handler');
+const compression = require('compression');
 const routerAapp = require('./routes');
 const app = express();
-const jwtCheck = auth({
-  audience: process.env.AUDIENCE,
-  issuerBaseURL: process.env.ISSUER_BASE_URL,
-});
+// jwtCheck will be created later only if oauth is enabled and env vars exist
+let jwtCheck;
 const { sequelize } = require('./db/connection');
 const corsOptions = {
   origin: function (origin, callback) {
@@ -27,10 +26,22 @@ const corsOptions = {
 }
 
 if (env.oauth) {
-  app.use(jwtCheck);
+  if (process.env.AUDIENCE && process.env.ISSUER_BASE_URL) {
+    jwtCheck = auth({
+      audience: process.env.AUDIENCE,
+      issuerBaseURL: process.env.ISSUER_BASE_URL,
+    });
+    app.use(jwtCheck);
+  } else {
+    console.warn('OAuth enabled in env but AUDIENCE or ISSUER_BASE_URL missing; skipping jwt middleware');
+  }
 }
 
-app.use(express.json());
+// Limit request body size to prevent large payload DoS
+app.use(express.json({ limit: process.env.BODY_LIMIT || '100kb' }));
+
+// Enable response compression
+app.use(compression());
 
 app.use(helmet());
 

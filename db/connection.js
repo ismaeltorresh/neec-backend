@@ -10,7 +10,13 @@ const sequelize = new Sequelize(
     host: env.db.maria.host,
     port: env.db.maria.port,
     dialect: env.db.maria.dialect,
-    logging: env.db.maria.logging,
+    logging: env.execution === 'development' ? console.log : false,
+    pool: {
+      max: env.db.maria.pool && env.db.maria.pool.max ? env.db.maria.pool.max : 10,
+      min: env.db.maria.pool && env.db.maria.pool.min ? env.db.maria.pool.min : 0,
+      acquire: env.db.maria.pool && env.db.maria.pool.acquire ? env.db.maria.pool.acquire : 30000,
+      idle: env.db.maria.pool && env.db.maria.pool.idle ? env.db.maria.pool.idle : 10000,
+    }
   }
 );
 

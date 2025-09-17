@@ -3,9 +3,30 @@ const express = require('express');
 const serviceRoutes = require('./template.routes');
 const service = 'Template';
 
+jest.mock('../db/connection', () => ({
+  sequelize: { query: jest.fn().mockResolvedValue([[], []]), QueryTypes: { SELECT: 'SELECT', INSERT: 'INSERT', UPDATE: 'UPDATE' } },
+}));
+jest.mock('../middlewares/validator.handler', () => (schema, prop) => (req, res, next) => next());
+jest.mock('../environments', () => ({ execution: process.env.execution || 'development' }));
+
 const app = express();
 app.use(express.json());
 app.use('/', serviceRoutes);
+app.use((err, req, res, next) => {
+  if (err && err.isBoom) return res.status(err.output.statusCode).json(err.output.payload);
+  res.status(500).json({ message: err.message || 'Internal Server Error' });
+});
+
+const db = require('../db/connection');
+db.sequelize.query.mockImplementation((sql, options) => {
+  if (/SELECT COUNT\(\*\) as total FROM/i.test(sql)) return Promise.resolve([[{ total: 1 }]]);
+  if (/WHERE id =/i.test(sql)) return Promise.resolve([[{ id: 'e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f' }]]);
+  if (/SELECT .* FROM .* WHERE/i.test(sql)) return Promise.resolve([[{ id: 1 }]]);
+  if (/INSERT INTO template/i.test(sql)) return Promise.resolve([{ insertId: 123 }]);
+  if (/UPDATE template SET/i.test(sql)) return Promise.resolve([{ affectedRows: 1 }]);
+  if (/DELETE FROM template/i.test(sql)) return Promise.resolve([{ affectedRows: 1 }]);
+  return Promise.resolve([[]]);
+});
 
 describe(`Pruebas para rutas de ${service}`, () => {
   it('GET /schema debería retornar el esquema en desarrollo', async () => {
@@ -46,7 +67,7 @@ describe(`Pruebas para rutas de ${service}`, () => {
 
   it('GET / Debería traer un listado registros', async () => {
     const newInput = {
-      dataSource: 'sql',
+      dataSource: 'fake',
       recordStatus: true,
     };
     const res = await request(app)
@@ -58,7 +79,7 @@ describe(`Pruebas para rutas de ${service}`, () => {
 
   it('GET /:id Debería traer un registro', async () => {
     const newInput = {
-      dataSource: 'sql',
+      dataSource: 'fake',
       recordStatus: true
     };
     const res = await request(app)

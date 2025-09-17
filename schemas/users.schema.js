@@ -32,6 +32,9 @@ const usersDelete = Joi.object({
 const usersGet = Joi.object({
   id: users.id.required(),
   dataSource: users.dataSource.required(),
+  // Pagination for list endpoints
+  page: Joi.number().integer().min(1).default(1),
+  pageSize: Joi.number().integer().min(1).max(100).default(10),
 });
 
 const usersPatch = Joi.object({
