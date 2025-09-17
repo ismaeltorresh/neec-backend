@@ -71,8 +71,9 @@ describe(`Pruebas para rutas de ${service}`, () => {
     const res = await request(app)
     .get('/')
     .query(newInput);
-    expect(res.statusCode).toBe(200);
-    expect(res.body instanceof Array).toBe(true);
+  expect(res.statusCode).toBe(200);
+  expect(res.body).toHaveProperty('data');
+  expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   it('GET /:id Debería traer un registro', async () => {

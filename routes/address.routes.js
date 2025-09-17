@@ -4,7 +4,7 @@ const express = require('express');
 const validatorHandler = require('../middlewares/validator.handler');
 const {schema, get, del, post, update} = require('../schemas/address.schema');
 const service = 'address';
-const { paginate } = require('../utils/pagination');
+const { paginated } = require('../utils/response');
 
 
 const router = express.Router();
@@ -55,15 +55,25 @@ router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
     } else if (inputData.dataSource === 'fake') {
       // Read fake data from test/fakedata.json
       const fake = require('../test/fakedata.json');
-      results = fake.address || [];
+      const list = fake.address || [];
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      const paged = paginated(list, page, pageSize);
+      return res.status(200).json(paged);
     } else if (inputData.dataSource === 'nosql') {
-      // Code to get data from nosql data base
-      results = [{}];
+      const nosqlMock = require('../utils/nosqlMock');
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      const paged = nosqlMock.paginateList('address', page, pageSize);
+      return res.status(200).json(paged);
     } else if (inputData.dataSource === 'both') {
-      // code to get data from sql an nosql database
+      const nosqlMock = require('../utils/nosqlMock');
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      const nosqlPaged = nosqlMock.paginateList('address', page, pageSize);
       results = {
         sql: [{}],
-        nosql: [{}]
+        nosql: nosqlPaged,
       };
     } else {
       next(
@@ -72,12 +82,12 @@ router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
       return;
     }
     if (Array.isArray(results)) {
-      const page = inputData.page || 1;
-      const pageSize = inputData.pageSize || 10;
-      res.status(200).json(paginate(results, page, pageSize));
-    } else {
-      res.status(200).json(results);
+      const page = parseInt(inputData.page, 10) || 1;
+      const pageSize = parseInt(inputData.pageSize, 10) || 10;
+      const paged = paginated(results, page, pageSize);
+      return res.status(200).json(paged);
     }
+    return res.status(200).json(results);
   } catch (error) {
     if (error && error.isBoom) return next(error);
     next(boom.internal(`Failed to retrieve all data from the ${service} service`));
@@ -105,8 +115,8 @@ router.get('/:id', validatorHandler(get, 'query'),(req, res, next) => {
         const list = fake.address || [];
         results = list.find(item => item.id === inputData.id) || {};
       } else if (inputData.dataSource === 'nosql') {
-        // Code to get data from nosql data base
-        results = [{}];
+        const nosqlMock = require('../utils/nosqlMock');
+        results = nosqlMock.findById('address', inputData.id) || {};
       } else if (inputData.dataSource === 'both') {
         // code to get data from sql an nosql database
         results = {

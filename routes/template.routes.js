@@ -49,9 +49,20 @@ router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
         allowedSorts: ['updatedAt','createdAt','useAs'],
       });
       results.sql = result;
-    } else if (inputData.dataSource === 'nosql') {
-      // Code to fetch data from the NoSQL database
-      results.nosql = [{}];
+      } else if (inputData.dataSource === 'nosql') {
+        const nosqlMock = require('../utils/nosqlMock');
+        const page = parseInt(inputData.page, 10) || 1;
+        const pageSize = parseInt(inputData.pageSize, 10) || 10;
+        results.nosql = nosqlMock.paginateList('template', page, pageSize);
+      } else if (inputData.dataSource === 'fake') {
+        const fake = require('../test/fakedata.json');
+        const list = fake.template || [];
+        const page = parseInt(inputData.page, 10) || 1;
+        const pageSize = parseInt(inputData.pageSize, 10) || 10;
+        const { paginated } = require('../utils/response');
+        const paged = paginated(list, page, pageSize);
+        // return { data, meta } like SQL responses
+        return res.status(200).json(paged);
     } else {
       next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
       return;
@@ -87,7 +98,12 @@ router.get('/:id', validatorHandler(get, 'query'), async (req, res, next) => {
         };
       }
     } else if (inputData.dataSource === 'nosql') {
-      results = [{}];
+      const nosqlMock = require('../utils/nosqlMock');
+      results = nosqlMock.findById('template', inputData.id) || {};
+    } else if (inputData.dataSource === 'fake') {
+      const fake = require('../test/fakedata.json');
+      const list = fake.template || [];
+      results = list.find(item => item.id === inputData.id) || {};
     } else {
       next(boom.badRequest(`${inputData.dataSource} is not a valid data source`));
     }

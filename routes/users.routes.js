@@ -57,11 +57,11 @@ router.get('/', validatorHandler(usersGet, 'query'), async (req, res, next) => {
 
     // Fallback: return empty paginated result
     results = [];
-    const { paginate } = require('../utils/pagination');
+      const { paginated } = require('../utils/response');
     const page = req.query.page || 1;
     const pageSize = req.query.pageSize || 10;
     const all = [];
-    res.status(200).json(paginate(all, page, pageSize));
+      res.status(200).json(paginated(all, page, pageSize));
   } catch (error) {
     if (error && error.isBoom) return next(error);
     next(boom.internal('I don’t have a correct execution environment'));

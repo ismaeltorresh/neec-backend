@@ -164,3 +164,146 @@ Desarrollado y mantenido por [ismaeltorresh](https://github.com/ismaeltorresh).
       useAs: Joi.string(), // EL USO QUE LE DARÁS EJE: CONTACT | 
     }
     ```
+
+## Formato de respuestas paginadas
+
+Este proyecto expone endpoints de listado que devuelven un objeto estandarizado con la forma:
+
+```json
+{
+    "data": [ /* array de elementos */ ],
+    "meta": {
+        "total": 123,
+        "page": 1,
+        "pageSize": 10,
+        "totalPages": 13
+    }
+}
+```
+
+Helper disponible
+- `utils/response.js` exporta la función `paginated(dataArray, page, pageSize)` que devuelve exactamente la estructura anterior (`{ data, meta }`).
+
+Uso en rutas
+- Para fuentes `fake` (archivo `test/fakedata.json`) y para datos en memoria, se utiliza `paginated(...)` para construir la respuesta.
+- Los endpoints que realizan paginación en SQL usan `utils/sqlPagination.js` que ya devuelve `{ data, meta }`. El helper `paginated` se usa cuando la fuente es un array local.
+
+Ejemplo (en una ruta Express):
+
+```js
+const { paginated } = require('../utils/response');
+const items = getItemsFromFake();
+const page = req.query.page || 1;
+const pageSize = req.query.pageSize || 10;
+res.json(paginated(items, page, pageSize));
+```
+
+## Ejemplos avanzados
+
+Los endpoints de listado soportan combinaciones de paginación, filtros, búsqueda por texto y ordenación restringida a campos permitidos.
+
+1) Paginación simple (page, pageSize)
+
+curl:
+
+```bash
+curl "http://localhost:3000/people?dataSource=fake&page=2&pageSize=5"
+```
+
+2) Filtros exactos
+
+Ejemplo: buscar productos por `brand` y `sku`:
+
+```bash
+curl "http://localhost:3000/products?dataSource=fake&brand=Acme&sku=ACM-001"
+```
+
+3) Filtros con wildcard
+
+Puedes usar `*` para indicar comodines (el backend convierte `*` a `%` para búsquedas SQL cuando aplique):
+
+```bash
+curl "http://localhost:3000/people?dataSource=fake&nameOne=Mar*"
+```
+
+4) Búsqueda por texto (`q`)
+
+Ejemplo: búsqueda en columnas configuradas para el recurso (p.ej. `nameOne`, `slug`):
+
+```bash
+curl "http://localhost:3000/people?dataSource=fake&q=maria"
+```
+
+5) Ordenación segura
+
+Usa `sortBy` y `sortDir` (solo campos permitidos). Si `sortBy` no está en la lista blanca, el helper rechazará la petición.
+
+```bash
+curl "http://localhost:3000/products?dataSource=fake&sortBy=price&sortDir=DESC"
+```
+
+6) Combinación (filtros + búsqueda + paginación + orden)
+
+```bash
+curl "http://localhost:3000/products?dataSource=fake&brand=Acme&q=auriculares&page=1&pageSize=10&sortBy=price&sortDir=ASC"
+```
+
+7) Ejemplo en Node.js (fetch)
+
+```js
+const fetch = require('node-fetch');
+async function getProducts() {
+    const url = 'http://localhost:3000/products?dataSource=fake&brand=Acme&page=1&pageSize=10';
+    const res = await fetch(url);
+    const body = await res.json();
+    console.log('data length', body.data.length);
+    console.log('meta', body.meta);
+}
+getProducts();
+```
+
+Notas
+- Las rutas SQL usan `utils/sqlPagination.js` que ya devuelve `{ data, meta }`.
+- Para fuentes locales (`fake`), se utiliza `utils/response.js::paginated` para garantizar el mismo contrato.
+
+## Uso de `nosqlMock` en pruebas
+
+Para facilitar pruebas locales sin una base de datos NoSQL real, existe el helper `utils/nosqlMock.js` que lee `test/fakedata.json` y expone las funciones:
+
+- `list(serviceName)` - devuelve el array del servicio (p.ej. 'people', 'products').
+- `findById(serviceName, id)` - busca un registro por id o devuelve `null`.
+- `paginateList(serviceName, page, pageSize, filters, search)` - devuelve `{ data, meta }` y soporta filtros y búsqueda.
+
+Filtros:
+- `filters` es un objeto con pares `campo: valor`. Los valores pueden incluir comodines `*` o `%` (ej. `{ nameOne: '*Mar*' }`).
+
+Search:
+- `search` es `{ q: 'termino', columns: ['col1','col2'] }` y realiza una búsqueda por substring (case-insensitive) en las columnas indicadas.
+
+Ejemplo de uso en tests (Jest):
+
+```js
+const nosqlMock = require('../utils/nosqlMock');
+
+test('mock nosql paginate with filters and search', () => {
+    const filters = { useAs: 'supplier' };
+    const search = { q: 'juan', columns: ['nameOne', 'slug'] };
+    const res = nosqlMock.paginateList('people', 1, 10, filters, search);
+    expect(res).toHaveProperty('data');
+    expect(res).toHaveProperty('meta');
+});
+```
+
+Ejemplo de cómo las rutas consumen estos parámetros (request):
+
+```
+GET /api/v1/people?dataSource=nosql&page=1&pageSize=10&nameOne=*Mar*&q=madrid
+```
+
+En ese caso la ruta pasará los query params a `nosqlMock.paginateList('people', page, pageSize, filters, search)` y devolverá la respuesta en el formato `{ data, meta }`.
+
+Notas:
+- `nosqlMock` está pensado para pruebas y desarrollo local; para producción debes reemplazarlo por la integración con la base de datos NoSQL real.
+
+
+
