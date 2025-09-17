@@ -28,7 +28,7 @@ router.get('/', validatorHandler(usersGet, 'query'), async (req, res, next) => {
     const inputData = req.query;
     // If client requests SQL source, run paginated query
     if (inputData.dataSource === 'sql') {
-      const { sqlPaginate } = require('../utils/sqlPagination');
+  const { sqlPaginate } = require('../utils/pagination');
       const page = parseInt(inputData.page, 10) || 1;
       const pageSize = parseInt(inputData.pageSize, 10) || 10;
       const filters = {

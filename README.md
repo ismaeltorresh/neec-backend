@@ -186,7 +186,51 @@ Helper disponible
 
 Uso en rutas
 - Para fuentes `fake` (archivo `test/fakedata.json`) y para datos en memoria, se utiliza `paginated(...)` para construir la respuesta.
-- Los endpoints que realizan paginación en SQL usan `utils/sqlPagination.js` que ya devuelve `{ data, meta }`. El helper `paginated` se usa cuando la fuente es un array local.
+- Los endpoints que realizan paginación en SQL usan `utils/pagination.js` (exporta `sqlPaginate`) que devuelve `{ data, meta }`. El helper `paginated` se usa cuando la fuente es un array local.
+
+## Utilidades de paginación (utils/pagination.js)
+
+Este archivo exporta dos helpers principales para unificar la paginación en el proyecto:
+
+- `paginate(items, page = 1, pageSize = 10)`
+    - Uso: paginar arrays en memoria o datos fake.
+    - Entrada: `items` (Array), `page` (número, 1-based), `pageSize` (número).
+    - Salida: `{ data: Array, meta: { total, page, pageSize, totalPages } }`.
+
+- `sqlPaginate(options)`
+    - Uso: paginar resultados de consultas SQL usando `COUNT(*)` + `SELECT ... LIMIT ... OFFSET ...`.
+    - Firma (opciones principales):
+        - `table` (string, required): nombre de la tabla (solo alfanumérico y guiones bajos).
+        - `recordStatus` (boolean|number|string): valor para `:recordStatus` en el WHERE (soporta 'true'/'false' y '1'/'0').
+        - `page` (number), `pageSize` (number)
+        - `columns` (string): columnas a seleccionar (por ejemplo `id, name` o `*`).
+        - `whereClause` (string): cláusula WHERE base (ej. `recordStatus = :recordStatus`).
+        - `replacements` (object): replacements adicionales para la consulta.
+        - `filters` (object) / `allowedFilters` (array): permite filtrar por columnas permitidas; soporta comodines (`*`) que se convierten a `%` para LIKE.
+        - `search` ({ q, columns }): búsqueda simple con LIKE sobre columnas listadas.
+        - `orderBy` (string) o `sortBy` + `sortDir` + `allowedSorts` para orden seguro.
+
+    - Retorna: `{ data: Array, meta: { total, page, pageSize, totalPages } }`.
+
+Ejemplo mínimo (ruta Express usando SQL):
+
+```js
+const { sqlPaginate } = require('../utils/pagination');
+
+const result = await sqlPaginate({
+    table: 'products',
+    page: 1,
+    pageSize: 10,
+    filters: { brand: 'Acme' },
+    allowedFilters: ['brand', 'sku'],
+    search: { q: 'auricular', columns: ['description','brand'] },
+    sortBy: 'price',
+    sortDir: 'ASC',
+    allowedSorts: ['price','createdAt','updatedAt'],
+});
+
+res.json(result); // { data, meta }
+```
 
 Ejemplo (en una ruta Express):
 
@@ -263,7 +307,7 @@ getProducts();
 ```
 
 Notas
-- Las rutas SQL usan `utils/sqlPagination.js` que ya devuelve `{ data, meta }`.
+- Las rutas SQL usan `utils/pagination.js` (exporta `sqlPaginate`) que devuelve `{ data, meta }`.
 - Para fuentes locales (`fake`), se utiliza `utils/response.js::paginated` para garantizar el mismo contrato.
 
 ## Uso de `nosqlMock` en pruebas

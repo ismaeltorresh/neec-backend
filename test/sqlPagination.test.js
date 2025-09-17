@@ -1,4 +1,4 @@
-const { sqlPaginate } = require('../utils/sqlPagination');
+const { sqlPaginate } = require('../utils/pagination');
 const db = require('../db/connection');
 const boom = require('@hapi/boom');
 

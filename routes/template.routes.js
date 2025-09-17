@@ -26,7 +26,7 @@ router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
   try {
     let results = {};
     if (inputData.dataSource === 'sql' || inputData.dataSource === 'both') {
-      const { sqlPaginate } = require('../utils/sqlPagination');
+  const { sqlPaginate } = require('../utils/pagination');
       const page = parseInt(inputData.page, 10) || 1;
       const pageSize = parseInt(inputData.pageSize, 10) || 10;
       const filters = {
