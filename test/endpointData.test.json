@@ -1,0 +1,48 @@
+{
+  "products": {
+    "endpoint": "/api/v1/products",
+    "testCases": [
+      {
+        "description": "Should return a list of products",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "queryParams": {
+          "dataSource": "fake",
+          "page":1,
+          "pageSize":10,
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "Create product",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "POST",
+        "queryParams": {
+          "dataSource": "fake",
+          "body": {
+            "name": "New Product",
+            "price": 29.99
+          }
+        }
+      }
+    ]
+  },
+  "users": {
+    "endpoint": "/api/v1/users",
+    "testCases": [
+      {
+        "description": "Should return a list of users",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "queryParams": {
+          "dataSource": "fake",
+          "page":1,
+          "pageSize":10
+        }
+      }
+    ]
+  }
+}

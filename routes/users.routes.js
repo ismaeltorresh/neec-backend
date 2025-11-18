@@ -28,7 +28,7 @@ router.get('/', validatorHandler(usersGet, 'query'), async (req, res, next) => {
     const inputData = req.query;
     // If client requests SQL source, run paginated query
     if (inputData.dataSource === 'sql') {
-  const { sqlPaginate } = require('../utils/pagination');
+      const { sqlPaginate } = require('../utils/pagination');
       const page = parseInt(inputData.page, 10) || 1;
       const pageSize = parseInt(inputData.pageSize, 10) || 10;
       const filters = {
@@ -57,11 +57,11 @@ router.get('/', validatorHandler(usersGet, 'query'), async (req, res, next) => {
 
     // Fallback: return empty paginated result
     results = [];
-      const { paginated } = require('../utils/response');
+    const { paginated } = require('../utils/response');
     const page = req.query.page || 1;
     const pageSize = req.query.pageSize || 10;
     const all = [];
-      res.status(200).json(paginated(all, page, pageSize));
+    res.status(200).json(paginated(all, page, pageSize));
   } catch (error) {
     if (error && error.isBoom) return next(error);
     next(boom.internal('I don’t have a correct execution environment'));

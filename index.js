@@ -86,7 +86,7 @@ app.use(perfTimeout);
 if (env.execution === 'development' || env.execution === 'production') {
 
   app.get('/', (req, res) => {
-    res.status(200).send('Welcome to Neec backend server');
+    res.status(200).json({ message: 'Welcome to Neec backend server' });
   });
 
   app.get('/api', (req, res) => {

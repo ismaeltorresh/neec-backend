@@ -11,11 +11,11 @@ const router = express.Router();
 let results;
 
 router.get('/schema', (req, res, next) => {
-  if (process.env.execution === 'development') {
+  if (env.execution === 'development') {
     res.status(200).json(schema);
   } else {
     next(
-      boom.forbidden('I don’t have a correct execution environment')
+      boom.forbidden(`I don’t have a correct execution environment, current execution is ${env.execution}`)
     );
   }
 });
