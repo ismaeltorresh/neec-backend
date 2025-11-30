@@ -3,27 +3,240 @@
     "endpoint": "/api/v1/products",
     "testCases": [
       {
-        "description": "Should return a list of products",
+        "description": "GET - Should return a paginated list of products from sql data",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "queryParams": {
+          "dataSource": "sql",
+          "page": 1,
+          "pageSize": 2,
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET - Should return a paginated list of products from nosql data",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "queryParams": {
+          "dataSource": "nosql",
+          "page": 1,
+          "pageSize": 2,
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET - Should return a paginated list of products from both data sources",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "queryParams": {
+          "dataSource": "both",
+          "page": 1,
+          "pageSize": 2,
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET - Should return a paginated list of products from fake data",
         "expectedStatus": 200,
         "expectedResponseType": "application/json",
         "method": "GET",
         "queryParams": {
           "dataSource": "fake",
-          "page":1,
-          "pageSize":10,
+          "page": 1,
+          "pageSize": 2,
           "recordStatus": true
         }
       },
       {
-        "description": "Create product",
+        "description": "GET - Error when invalid data source is provided",
+        "expectedStatus": 400,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "queryParams": {
+          "dataSource": "invalid",
+          "page": 1,
+          "pageSize": 10,
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET - Error when recordStatus is missing",
+        "expectedStatus": 400,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "queryParams": {
+          "dataSource": "fake",
+          "page": 1,
+          "pageSize": 10
+        }
+      },
+      {
+        "description": "GET /:id - Should return a specific product by ID from ::SQL:: data",
         "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "endpoint": "/api/v1/products/prd-1002-aaaa-bbbb-cccc-000000000002",
+        "queryParams": {
+          "dataSource": "sql",
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET /:id - Should return a specific product by ID from ::NOSQL:: data",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "endpoint": "/api/v1/products/prd-1002-aaaa-bbbb-cccc-000000000002",
+        "queryParams": {
+          "dataSource": "nosql",
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET /:id - Should return a specific product by ID from ::BOTH:: data",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "endpoint": "/api/v1/products/prd-1002-aaaa-bbbb-cccc-000000000002",
+        "queryParams": {
+          "dataSource": "both",
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET /:id - Should return a specific product by ID from fake data",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "GET",
+        "endpoint": "/api/v1/products/prd-1002-aaaa-bbbb-cccc-000000000002",
+        "queryParams": {
+          "dataSource": "fake",
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "GET /:id - Should no data found for non-existing product ID",
+        "expectedStatus": 204,
+        "expectedResponseType": "",
+        "method": "GET",
+        "endpoint": "/api/v1/products/prd-0000-aaaa-bbbb-cccc-000000000000",
+        "queryParams": {
+          "dataSource": "fake",
+          "recordStatus": true
+        }
+      },
+      {
+        "description": "POST - Should create a new product successfully",
+        "expectedStatus": 201,
         "expectedResponseType": "application/json",
         "method": "POST",
         "queryParams": {
-          "dataSource": "fake",
           "body": {
-            "name": "New Product",
+            "dataSource": "sql",
+            "createdAt": 1700000000,
+            "updatedAt": 1700000000,
+            "updatedBy": "e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f",
+            "recordStatus": true,
+            "useAs": "product",
+            "sumary": "Test product summary",
             "price": 29.99
+          }
+        }
+      },
+      {
+        "description": "POST - Error when required fields are missing",
+        "expectedStatus": 400,
+        "expectedResponseType": "application/json",
+        "method": "POST",
+        "queryParams": {
+          "body": {
+            "dataSource": "sql",
+            "price": 29.99
+          }
+        }
+      },
+      {
+        "description": "POST - Error when dataSource is invalid",
+        "expectedStatus": 400,
+        "expectedResponseType": "application/json",
+        "method": "POST",
+        "queryParams": {
+          "body": {
+            "id": "123e4567-e89b-12d3-a456-426614174002",
+            "dataSource": "invalid",
+            "createdAt": 1700000000,
+            "updatedAt": 1700000000,
+            "updatedBy": "e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f",
+            "recordStatus": true,
+            "useAs": "product",
+            "sumary": "Test product",
+            "price": 19.99
+          }
+        }
+      },
+      {
+        "description": "PUT /:id - Should update an existing product",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "PUT",
+        "endpoint": "/api/v1/products/123e4567-e89b-12d3-a456-426614174000",
+        "queryParams": {
+          "body": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "dataSource": "sql",
+            "updatedAt": 1700000100,
+            "updatedBy": "e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f",
+            "recordStatus": true,
+            "price": 39.99,
+            "sumary": "Updated product summary"
+          }
+        }
+      },
+      {
+        "description": "PUT /:id - Error when required fields are missing",
+        "expectedStatus": 400,
+        "expectedResponseType": "application/json",
+        "method": "PUT",
+        "endpoint": "/api/v1/products/123e4567-e89b-12d3-a456-426614174000",
+        "queryParams": {
+          "body": {
+            "dataSource": "sql",
+            "price": 39.99
+          }
+        }
+      },
+      {
+        "description": "DELETE /:id - Should delete a product (set recordStatus to false)",
+        "expectedStatus": 200,
+        "expectedResponseType": "application/json",
+        "method": "DELETE",
+        "endpoint": "/api/v1/products/123e4567-e89b-12d3-a456-426614174000",
+        "queryParams": {
+          "body": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "dataSource": "sql",
+            "recordStatus": false,
+            "updatedAt": 1700000200,
+            "updatedBy": "e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f"
+          }
+        }
+      },
+      {
+        "description": "DELETE /:id - Error when recordStatus is not false",
+        "expectedStatus": 400,
+        "expectedResponseType": "application/json",
+        "method": "DELETE",
+        "endpoint": "/api/v1/products/123e4567-e89b-12d3-a456-426614174000",
+        "queryParams": {
+          "body": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "dataSource": "sql",
+            "recordStatus": true,
+            "updatedAt": 1700000200,
+            "updatedBy": "e7b8f8e2-8d3b-4d3b-9f8e-2e8d3b4d3b9f"
           }
         }
       }

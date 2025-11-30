@@ -248,7 +248,9 @@ run_test_case() {
     local method=$(echo "$test_data" | jq -r '.method')
     local expected_status=$(echo "$test_data" | jq -r '.expectedStatus')
     local expected_content_type=$(echo "$test_data" | jq -r '.expectedResponseType')
-    local endpoint_path=$(echo "$TEST_DATA" | jq -r ".[\"$endpoint_name\"].endpoint")
+    local default_endpoint=$(echo "$TEST_DATA" | jq -r ".[\"$endpoint_name\"].endpoint")
+    local custom_endpoint=$(echo "$test_data" | jq -r '.endpoint // empty')
+    local endpoint_path="${custom_endpoint:-$default_endpoint}"
     local query_params=$(echo "$test_data" | jq -r '.queryParams // {}')
     local body=$(echo "$query_params" | jq -r '.body // null')
     
@@ -301,15 +303,13 @@ run_test_case() {
         print_result "FAIL" "Content-Type: $content_type (esperado: $expected_content_type)"
     fi
     
-    # Mostrar respuesta si verbose está activado o si hubo error
-    if [ "$VERBOSE" = "true" ] || [ "$status_code" != "$expected_status" ]; then
-        echo ""
-        echo -e "${BLUE}Response Body:${NC}"
-        if echo "$response_body" | jq '.' >/dev/null 2>&1; then
-            echo "$response_body" | jq '.'
-        else
-            echo "$response_body"
-        fi
+    # Mostrar respuesta siempre
+    echo ""
+    echo -e "${BLUE}Response Body:${NC}"
+    if echo "$response_body" | jq '.' >/dev/null 2>&1; then
+        echo "$response_body" | jq '.'
+    else
+        echo "$response_body"
     fi
     
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

@@ -76,7 +76,6 @@ const post = Joi.object({
   // ** Start recommended required fields **
   createdAt: schema.createdAt.required(),
   dataSource: schema.dataSource.required(),
-  id: schema.id.required(),
   recordStatus: schema.recordStatus.required(),
   updatedAt: schema.updatedAt.required(),
   updatedBy: schema.updatedBy.required(),
