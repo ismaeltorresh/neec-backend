@@ -7,21 +7,64 @@ function errorNotFound(req, res, next) {
 }
 
 function errorLog(err, req, res, next) {
+  // Structured logging
+  const errorContext = {
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    errorMessage: err.message,
+    errorName: err.name,
+    statusCode: err.statusCode || err.status || 500
+  };
+
+  if (env.execution === 'development') {
+    console.error('[ERROR]', JSON.stringify(errorContext, null, 2));
+    console.error('[STACK]', err.stack);
+  } else {
+    // In production, log without stack trace
+    console.error('[ERROR]', JSON.stringify(errorContext));
+  }
+
   next(err);
 }
 
 function errorHandler(err, req, res, next) {
-  if (env.execution === 'development') {
-    res.status(500).json({
-      message: err.message,
-      stack: err.stack
-    });
-  } else {
-    Sentry.captureException(err);
-    res.status(500).json({
-      message: err.message
+  // Determine status code
+  const statusCode = err.statusCode || err.status || 500;
+  
+  // Send to Sentry in production (only for 5xx errors)
+  if (env.execution === 'production' && statusCode >= 500) {
+    Sentry.captureException(err, {
+      tags: {
+        path: req.path,
+        method: req.method
+      },
+      user: {
+        ip_address: req.ip
+      }
     });
   }
+
+  // Prepare safe error response
+  const errorResponse = {
+    error: statusCode >= 500 ? 'Internal Server Error' : err.name || 'Error',
+    message: statusCode >= 500 
+      ? 'An unexpected error occurred' // Generic message for 5xx
+      : (err.message || 'An error occurred'), // Client errors can show message
+  };
+
+  // In development, add debugging info
+  if (env.execution === 'development') {
+    errorResponse.debug = {
+      message: err.message,
+      stack: err.stack,
+      statusCode
+    };
+  }
+
+  res.status(statusCode).json(errorResponse);
 }
 
 function errorBoom(err, req, res, next) {

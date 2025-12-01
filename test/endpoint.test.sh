@@ -225,13 +225,9 @@ build_query_params() {
         local filtered=$(echo "$params" | jq 'del(.body)')
         
         if [ "$filtered" != "{}" ]; then
-            query="?"
-            while IFS="=" read -r key value; do
-                if [ -n "$key" ] && [ "$key" != "body" ]; then
-                    query="${query}${key}=${value}&"
-                fi
-            done < <(echo "$filtered" | jq -r 'to_entries[] | "\(.key)=\(.value)"')
-            query=${query%&}  # Eliminar el último &
+            local qs
+            qs=$(echo "$filtered" | jq -r 'to_entries | map("\(.key)=\(.value)") | join("&")')
+            query="?${qs}"
         fi
     fi
     

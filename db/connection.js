@@ -2,6 +2,49 @@ const { Sequelize } = require('sequelize');
 const env = require('../environments');
 const boom = require('@hapi/boom');
 
+/**
+ * Default pool configuration for MariaDB connection.
+ * Based on Sequelize best practices and production requirements.
+ */
+const DEFAULT_POOL_CONFIG = {
+  max: 10,
+  min: 2,
+  acquire: 30000,
+  idle: 10000,
+  evict: 1000,
+  maxUses: 10000,
+};
+
+/**
+ * Validates and builds pool configuration with security checks.
+ * @returns {Object} Validated pool configuration
+ */
+function buildPoolConfig() {
+  const poolConfig = {
+    max: env.db.maria.pool?.max ?? DEFAULT_POOL_CONFIG.max,
+    min: env.db.maria.pool?.min ?? DEFAULT_POOL_CONFIG.min,
+    acquire: env.db.maria.pool?.acquire ?? DEFAULT_POOL_CONFIG.acquire,
+    idle: env.db.maria.pool?.idle ?? DEFAULT_POOL_CONFIG.idle,
+    evict: env.db.maria.pool?.evict ?? DEFAULT_POOL_CONFIG.evict,
+    maxUses: env.db.maria.pool?.maxUses ?? DEFAULT_POOL_CONFIG.maxUses,
+  };
+
+  // Security validations
+  if (poolConfig.max > 100) {
+    console.warn(`Pool max (${poolConfig.max}) exceeds recommended limit. Setting to 100`);
+    poolConfig.max = 100;
+  }
+  if (poolConfig.min > poolConfig.max) {
+    throw new Error('Pool min cannot exceed max');
+  }
+
+  return poolConfig;
+}
+
+/**
+ * Sequelize instance configured for MariaDB connection.
+ * @type {Sequelize}
+ */
 const sequelize = new Sequelize(
   env.db.maria.database,
   env.db.maria.user,
@@ -11,28 +54,30 @@ const sequelize = new Sequelize(
     port: env.db.maria.port,
     dialect: env.db.maria.dialect,
     logging: env.execution === 'development' ? console.log : false,
-    pool: {
-      max: env.db.maria.pool && env.db.maria.pool.max ? env.db.maria.pool.max : 10,
-      min: env.db.maria.pool && env.db.maria.pool.min ? env.db.maria.pool.min : 0,
-      acquire: env.db.maria.pool && env.db.maria.pool.acquire ? env.db.maria.pool.acquire : 30000,
-      idle: env.db.maria.pool && env.db.maria.pool.idle ? env.db.maria.pool.idle : 10000,
-    }
+    pool: buildPoolConfig(),
   }
 );
 
-// Function to test the connection
+/**
+ * Tests the database connection.
+ * Should be called explicitly during application startup.
+ * @async
+ * @throws {Boom.Error} If connection fails
+ * @returns {Promise<void>}
+ */
 async function testConnection() {
   try {
     await sequelize.authenticate();
-    console.log('Connection to Maria DB has been established successfully.');
+    console.log('Connection to MariaDB established successfully.');
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
-    throw error; // Re-throw the error to be handled elsewhere
+    if (env.execution === 'development') {
+      console.error('Unable to connect to the database:', error);
+    } else {
+      console.error('Unable to connect to the database:', error.message);
+    }
+    throw boom.internal('Database connection failed');
   }
 }
-
-// Test the connection when the file is loaded
-// testConnection();
 
 module.exports = {
   sequelize,

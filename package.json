@@ -39,15 +39,15 @@
     "@sentry/profiling-node": "^8.32.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.19.2",
     "express-oauth2-jwt-bearer": "^1.6.0",
     "helmet": "^8.0.0",
     "joi": "^17.13.3",
     "mariadb": "^3.4.2",
     "mysql2": "^3.14.0",
-    "sequelize": "^6.37.7"
-    ,
-    "swagger-ui-express": "^4.6.3"
+    "sequelize": "^6.37.7",
+    "swagger-ui-express": "^4.6.3",
+    "yaml": "^2.3.4"
   }
-  
 }
