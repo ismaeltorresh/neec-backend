@@ -1,20 +1,53 @@
-// Load environment variables from .env file
-require('dotenv').config();
+import 'dotenv/config';
+import * as Sentry from '@sentry/node';
+import './instrument.js';
+import { auth } from 'express-oauth2-jwt-bearer';
+import { errorLog, errorHandler, errorBoom, errorNotFound } from './middlewares/error.handler.js';
+import cors from 'cors';
+import env from './environments/index.js';
+import express from 'express';
+import helmet from 'helmet';
+import perfTimeout from './middlewares/perf.handler.js';
+import compression from 'compression';
+import routerApp from './routes/index.js';
+import { sequelize } from './db/connection.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import logger from './utils/logger.js';
 
-const Sentry = require("@sentry/node");
-require("./instrument.js");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const { auth } = require("express-oauth2-jwt-bearer");
-const { errorLog, errorHandler, errorBoom, errorNotFound } = require('./middlewares/error.handler');
-const cors = require('cors');
-const env = require('./environments');
-const express = require('express');
-const helmet = require('helmet');
-const perfTimeout = require('./middlewares/perf.handler');
-const compression = require('compression');
-const routerApp = require('./routes');
+// Validación de variables de entorno críticas
+const requiredEnvVars = {
+  'NODE_ENV': process.env.NODE_ENV
+};
+
+// Solo validar DB si no está en modo test
+if (process.env.NODE_ENV !== 'test') {
+  requiredEnvVars['DB_HOST'] = process.env.DB_HOST;
+  requiredEnvVars['DB_NAME'] = process.env.DB_NAME;
+  requiredEnvVars['DB_USER'] = process.env.DB_USER;
+}
+
+const missingVars = Object.entries(requiredEnvVars)
+  .filter(([key, value]) => !value)
+  .map(([key]) => key);
+
+if (missingVars.length > 0) {
+  logger.error('Missing required environment variables', { missing: missingVars });
+  logger.error('Please check your .env file or environment configuration');
+  process.exit(1);
+}
+
+// Validar valores de NODE_ENV
+const validEnvs = ['development', 'production', 'test'];
+if (!validEnvs.includes(process.env.NODE_ENV)) {
+  logger.warn('NODE_ENV is not standard', { current: process.env.NODE_ENV, expected: validEnvs });
+}
+
 const app = express();
-const { sequelize } = require('./db/connection');
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, Postman) in development
@@ -30,13 +63,13 @@ const corsOptions = {
 }
 
 // Swagger UI for docs (protected)
-const fs = require('fs');
-const path = require('path');
 let swaggerUi;
 let YAML;
 try {
-  swaggerUi = require('swagger-ui-express');
-  YAML = require('yaml');
+  const swaggerModule = await import('swagger-ui-express');
+  swaggerUi = swaggerModule.default;
+  const yamlModule = await import('yaml');
+  YAML = yamlModule.default;
 } catch (e) {
   // swagger-ui-express not installed; docs will be available via tools/serve-docs.js
   swaggerUi = null;
@@ -55,7 +88,7 @@ if (env.oauth) {
       console.error('Error initializing OAuth middleware:', error.message);
     }
   } else {
-    console.warn('OAuth enabled in env but AUDIENCE or ISSUER_BASE_URL missing; skipping jwt middleware');
+    logger.warn('OAuth enabled but AUDIENCE or ISSUER_BASE_URL missing', { oauth: env.oauth });
   }
 }
 
@@ -111,7 +144,7 @@ if (env.execution === 'development' || env.execution === 'production') {
       console.info('Docs available at /docs');
     }
   } catch (err) {
-    console.warn('Could not mount /docs:', err.message);
+    logger.warn('Could not mount /docs', { error: err.message });
   }
 
   // *** ROUTES ***
@@ -151,7 +184,7 @@ if (env.execution === 'development' || env.execution === 'production') {
     // Test the connection to the database
     if (env.execution !== 'development') {
       await sequelize.authenticate();
-      console.log('Conexión a MariaDB exitosa');
+      logger.db('MariaDB connection successful');
       await sequelize.sync();
     }
 

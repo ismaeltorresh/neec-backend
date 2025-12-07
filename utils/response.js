@@ -14,4 +14,4 @@ function paginated(dataArray = [], page = 1, pageSize = 10) {
   return { data, meta };
 }
 
-module.exports = { paginated };
+export { paginated };

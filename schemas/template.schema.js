@@ -5,7 +5,7 @@ Several validation schemas are defined for different CRUD operations (Create, Re
 Each of these schemas ensures that the provided data complies with the specified rules before allowing the operation to proceed, which helps maintain data integrity and consistency in the application.
 */
 
-const Joi = require('joi');
+import Joi from 'joi';
 
 const schema = {
   // ** Start recommended mandatory schema **
@@ -59,10 +59,4 @@ const post = Joi.object({
 
 // (duplicate declarations removed)
 
-module.exports = {
-  schema,
-  del,
-  get,
-  update,
-  post,
-};
+export { schema, del, get, update, post };

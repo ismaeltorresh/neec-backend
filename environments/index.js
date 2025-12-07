@@ -1,4 +1,4 @@
 const envName = process.env.NODE_ENV || 'development';
-const env = require(`./environments.${envName}`);
+const env = await import(`./environments.${envName}.js`);
 
-module.exports = env;
+export default env.default;

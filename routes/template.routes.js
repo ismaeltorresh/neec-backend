@@ -1,65 +1,50 @@
-const boom = require('@hapi/boom');
-const env = require('../environments');
-const express = require('express');
-const validatorHandler = require('../middlewares/validator.handler');
-const { schema, get, del, post, update } = require('../schemas/template.schema');
+import boom from '@hapi/boom';
+import env from '../environments/index.js';
+import express from 'express';
+import validatorHandler from '../middlewares/validator.handler.js';
+import { asyncHandler, withTimeout } from '../middlewares/async.handler.js';
+import { schema, get, del, post, update } from '../schemas/template.schema.js';
+import { paginated } from '../utils/response.js';
+import { validatePagination } from '../utils/validation.js';
+
 const service = 'template';
-const { paginated } = require('../utils/response');
 
 const router = express.Router();
 
-router.get('/schema', (req, res, next) => {
-  try {
-    if (env.execution === 'development') {
-      res.status(200).json(schema);
-    } else {
-      next(
-        boom.forbidden(`I don’t have a correct execution environment, current execution is ${env.execution}`)
-      );
-    }
-  } catch (error) {
-    if (error && error.isBoom) return next(error);
-    next(
-      boom.internal(`Unknown error while retrieving schema for the ${service} service`)
-    );
+router.get('/schema', asyncHandler(async (req, res) => {
+  if (env.execution === 'development') {
+    res.status(200).json(schema);
+  } else {
+    throw boom.forbidden(`I don't have a correct execution environment, current execution is ${env.execution}`);
   }
-  
-});
+}));
 
 router.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My intentionally Sentry error! is only test");
 });
 
-router.get('/', validatorHandler(get, 'query'), async (req, res, next) => {
+router.get('/', validatorHandler(get, 'query'), asyncHandler(async (req, res) => {
   const inputData = req.query;
-  try {
-    let result;
+  let result;
 
-    if (inputData.dataSource === 'sql') {
-      result = await sqlList(inputData);
-    } else if (inputData.dataSource === 'nosql') {
-      result = await nosqlList(inputData);
-    } else if (inputData.dataSource === 'both') {
-      result = {
-        sql: await sqlList(inputData),
-        nosql: await nosqlList(inputData),
-      };
-    } else if (inputData.dataSource === 'fake') {
-      result = await getFakeList(inputData);
-    } else {
-      return next(
-        boom.badRequest(`${inputData.dataSource} is not a valid data source`)
-      );
-    }
-    const hasData = checkHasData(result, inputData.dataSource);
-    return res.status(hasData ? 200 : 204).json(result);
-  } catch (error) {
-    if (error && error.isBoom) return next(error);
-    return next(
-      boom.internal(`An error occurred while retrieving the list from ${service} service`)
-    );
+  if (inputData.dataSource === 'sql') {
+    result = await withTimeout(sqlList(inputData), 5000);
+  } else if (inputData.dataSource === 'nosql') {
+    result = await nosqlList(inputData);
+  } else if (inputData.dataSource === 'both') {
+    result = {
+      sql: await withTimeout(sqlList(inputData), 5000),
+      nosql: await nosqlList(inputData),
+    };
+  } else if (inputData.dataSource === 'fake') {
+    result = await getFakeList(inputData);
+  } else {
+    throw boom.badRequest(`${inputData.dataSource} is not a valid data source`);
   }
-});
+  
+  const hasData = checkHasData(result, inputData.dataSource);
+  return res.status(hasData ? 200 : 204).json(result);
+}));
 
 router.get('/:id', validatorHandler(get, 'query'), async (req, res, next) => {
   const inputData = req.query;
@@ -200,9 +185,8 @@ router.delete('/:id', validatorHandler(del, 'body'), async (req, res, next) => {
  * @returns {Promise<Object>} Resolves to the paginated result set containing product data.
  */
 async function sqlList(inputData) {
-  const { sqlPaginate } = require('../utils/pagination');
-  const page = parseInt(inputData.page, 10) || 1;
-  const pageSize = parseInt(inputData.pageSize, 10) || 10;
+  const { sqlPaginate } = await import('../utils/pagination.js');
+  const { page, pageSize } = validatePagination(inputData);
   const filters = {
     brand: inputData.brand,
     categoryId: inputData.categoryId,
@@ -234,9 +218,8 @@ async function sqlList(inputData) {
  * @returns {Promise<Object>} Paginated result containing the requested page of template.
  */
 async function nosqlList(inputData) {
-  const nosqlMock = require('../utils/nosqlMock');
-  const page = parseInt(inputData.page, 10) || 1;
-  const pageSize = parseInt(inputData.pageSize, 10) || 10;
+  const nosqlMock = await import('../utils/nosqlMock.js');
+  const { page, pageSize } = validatePagination(inputData);
   const paged = nosqlMock.paginateList(service, page, pageSize);
   return paged;
 }
@@ -247,8 +230,8 @@ async function nosqlList(inputData) {
  * @param {{ id: string }} inputData - The lookup payload containing the template identifier.
  * @returns {Object} The matching template record if found, otherwise an empty object.
  */
-function nosqlFindById(inputData) {
-  const nosqlMock = require('../utils/nosqlMock');
+async function nosqlFindById(inputData) {
+  const nosqlMock = await import('../utils/nosqlMock.js');
   const record = nosqlMock.findById(service, inputData.id) || {};
   return record;
 }
@@ -260,10 +243,9 @@ function nosqlFindById(inputData) {
  * @returns {Promise<Object>} Paginated fake data.
  */
 async function getFakeList(inputData) {
-  const fake = require('../test/fakedata.json');
-  const list = fake.template || [];
-  const page = parseInt(inputData.page, 10) || 1;
-  const pageSize = parseInt(inputData.pageSize, 10) || 10;
+  const { createRequire } = await import("module"); const __require = createRequire(import.meta.url); const fakeData = __require("../test/fakedata.json");
+  const list = fakeData.template || [];
+  const { page, pageSize } = validatePagination(inputData);
   return paginated(list, page, pageSize);
 }
 
@@ -273,9 +255,9 @@ async function getFakeList(inputData) {
  * @param {{ id: string }} inputData - The lookup payload.
  * @returns {Object} The matching fake record if found.
  */
-function getFakeById(inputData) {
-  const fake = require('../test/fakedata.json');
-  const list = fake.template || [];
+async function getFakeById(inputData) {
+  const { createRequire } = await import("module"); const __require = createRequire(import.meta.url); const fakeData = __require("../test/fakedata.json");
+  const list = fakeData.template || [];
   return list.find(item => item.id === inputData.id) || {};
 }
 
@@ -404,4 +386,4 @@ function checkHasDataById(result, dataSource) {
   return result.id !== undefined;
 }
 
-module.exports = router;
+export default router;

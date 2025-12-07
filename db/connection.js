@@ -1,6 +1,7 @@
-const { Sequelize } = require('sequelize');
-const env = require('../environments');
-const boom = require('@hapi/boom');
+import { Sequelize } from 'sequelize';
+import env from '../environments/index.js';
+import boom from '@hapi/boom';
+import logger from '../utils/logger.js';
 
 /**
  * Default pool configuration for MariaDB connection.
@@ -31,7 +32,7 @@ function buildPoolConfig() {
 
   // Security validations
   if (poolConfig.max > 100) {
-    console.warn(`Pool max (${poolConfig.max}) exceeds recommended limit. Setting to 100`);
+    logger.warn('Pool max exceeds recommended limit', { max: poolConfig.max, limit: 100 });
     poolConfig.max = 100;
   }
   if (poolConfig.min > poolConfig.max) {
@@ -68,7 +69,7 @@ const sequelize = new Sequelize(
 async function testConnection() {
   try {
     await sequelize.authenticate();
-    console.log('Connection to MariaDB established successfully.');
+    logger.db('Connection to MariaDB established successfully');
   } catch (error) {
     if (env.execution === 'development') {
       console.error('Unable to connect to the database:', error);
@@ -79,7 +80,4 @@ async function testConnection() {
   }
 }
 
-module.exports = {
-  sequelize,
-  testConnection
-};
+export { sequelize, testConnection };

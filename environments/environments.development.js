@@ -29,4 +29,4 @@ if (!env.db.maria.password) {
   throw new Error('DB_PASSWORD environment variable is required');
 }
 
-module.exports = env;
+export default env;

@@ -1,5 +1,6 @@
 
-const env = require('../environments');
+import env from '../environments/index.js';
+import logger from '../utils/logger.js';
 
 function perfTimeout(req, res, next) {
   const timeoutMs = env.requestTimeout || (process.env.REQUEST_TIMEOUT ? Number(process.env.REQUEST_TIMEOUT) : 20000);
@@ -8,7 +9,7 @@ function perfTimeout(req, res, next) {
   const timer = setTimeout(() => {
     if (!res.headersSent) {
       // Log timeout for monitoring
-      console.warn(`[TIMEOUT] ${req.method} ${req.path} exceeded ${timeoutMs}ms`);
+      logger.perf('Request timeout exceeded', { method: req.method, path: req.path, timeout: timeoutMs });
       
       res.status(408).json({ 
         error: 'Request Timeout',
@@ -25,4 +26,4 @@ function perfTimeout(req, res, next) {
   next();
 };
 
-module.exports = perfTimeout;
+export default perfTimeout;

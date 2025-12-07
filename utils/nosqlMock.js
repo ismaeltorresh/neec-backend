@@ -1,4 +1,6 @@
-const { paginated } = require('./response');
+import { paginated } from './response.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 function loadFake() {
   try {
@@ -75,4 +77,4 @@ function paginateList(serviceName, page = 1, pageSize = 10, filters = {}, search
   return paginated(arr, page, pageSize);
 }
 
-module.exports = { list, findById, paginateList };
+export { list, findById, paginateList };

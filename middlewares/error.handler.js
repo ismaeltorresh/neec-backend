@@ -1,6 +1,6 @@
-require("../instrument.js");
-const env = require("../environments");
-const Sentry = require("@sentry/node");
+import '../instrument.js';
+import env from '../environments/index.js';
+import * as Sentry from '@sentry/node';
 
 function errorNotFound(req, res, next) {
   res.status(404).json({ error: 'The requested route was not found' });
@@ -76,4 +76,4 @@ function errorBoom(err, req, res, next) {
   }
 }
 
-module.exports = { errorNotFound, errorLog, errorHandler, errorBoom };
+export { errorNotFound, errorLog, errorHandler, errorBoom };

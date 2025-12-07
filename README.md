@@ -4,7 +4,11 @@
 
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.19-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![ES Modules](https://img.shields.io/badge/ES-Modules-F7DF1E?logo=javascript&logoColor=black)](https://nodejs.org/api/esm.html)
+[![Tests](https://img.shields.io/badge/Tests-12%2F12_passing-success?logo=jest)](https://jestjs.io/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+
+> **✨ Últimas mejoras:** Sistema de logging centralizado, validación segura con `parseIntSafe`, async error handling con 12 tests, y ES Modules migration completa.
 
 ## 📋 Tabla de Contenidos
 
@@ -21,7 +25,9 @@
 - [Testing](#-testing)
 - [Generador de Servicios](#-generador-de-servicios)
 - [Documentación API](#-documentación-api)
+- [Logging y Utilidades](#-logging-y-utilidades)
 - [Monitoreo y Observabilidad](#-monitoreo-y-observabilidad)
+- [Mejoras Recientes](#-mejoras-recientes-diciembre-2025)
 - [Contribución](#-contribución)
 
 ---
@@ -33,7 +39,9 @@ NEEC Backend es una API REST construida siguiendo los principios de **arquitectu
 ### Características Principales
 
 - ✅ **Arquitectura en Capas**: Separación clara entre Routes, Controllers, Services y Repositories
-- ✅ **Validación Robusta**: Validación de entrada con Joi en todas las rutas
+- ✅ **Validación Robusta**: Validación de entrada con Joi + utilidades de parsing seguro
+- ✅ **Logging Centralizado**: Sistema de logging estructurado con 6 niveles (info, warn, error, debug, db, perf)
+- ✅ **Async/Await Error Handling**: Middleware asyncHandler, withTimeout, withRetry con 12 tests
 - ✅ **Seguridad Hardening**: Helmet, CORS, sanitización de inputs, gestión segura de errores
 - ✅ **Autenticación OAuth 2.0**: Integración con Auth0 (JWT Bearer tokens)
 - ✅ **Multi-DataSource**: Soporte para SQL, NoSQL, mock y fake data
@@ -121,7 +129,8 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 
 ### Monitoreo
 - **APM**: Sentry (Node + Profiling)
-- **Logging**: Console estructurado con contexto
+- **Logging**: Sistema centralizado con timestamps, contexto JSON y niveles (utils/logger.js)
+- **Validation**: Utilidades de parsing seguro (parseIntSafe, validatePagination)
 
 ### Documentación
 - **Spec**: OpenAPI 3.0 (YAML)
@@ -246,6 +255,13 @@ npm run prod
 npm test
 ```
 
+### Seguridad
+
+```bash
+# Auditoría de seguridad (verifica secrets hardcodeados, .gitignore, etc.)
+npm run security:audit
+```
+
 ### Linting
 
 ```bash
@@ -281,6 +297,7 @@ neec-backend/
 │   ├── environments.production.js
 │   └── environments.test
 ├── middlewares/
+│   ├── async.handler.js       # Async/await error handling wrapper
 │   ├── error.handler.js       # Error handling centralizado
 │   ├── perf.handler.js        # Timeout middleware
 │   └── validator.handler.js   # Validación con Joi
@@ -309,9 +326,11 @@ neec-backend/
 ├── tools/
 │   └── serve-docs.js          # Servidor standalone para docs
 ├── utils/
+│   ├── logger.js              # Sistema de logging centralizado (6 niveles)
 │   ├── nosqlMock.js           # Mock de operaciones NoSQL
 │   ├── pagination.js          # Utilidades de paginación SQL
-│   └── response.js            # Helpers de respuestas HTTP
+│   ├── response.js            # Helpers de respuestas HTTP
+│   └── validation.js          # Utilidades de validación segura (parseIntSafe, validatePagination)
 ├── .editorconfig              # Configuración de editor
 ├── .env.example               # Template de variables de entorno
 ├── .eslintrc.json             # Configuración ESLint
@@ -423,8 +442,32 @@ El proyecto implementa múltiples capas de seguridad siguiendo las recomendacion
 ### 3. Criptografía (NIST SP 800)
 
 - ✅ **Password Hashing**: Usar `bcrypt` (>=10 rounds) o `Argon2` (implementar en capa de servicio)
-- ✅ **Secrets Management**: NUNCA hardcodear keys, usar `process.env`
+- ✅ **Secrets Management**: Variables de entorno vía `.env`, NUNCA hardcodeadas
 - ✅ **Strong Algorithms**: JWT con HS256 mínimo, RS256 preferido
+- ✅ **Sentry DSN**: Movido a variable de entorno `SENTRY_DSN`
+- ✅ **Security Audit**: Script automatizado (`npm run security:audit`)
+
+#### Gestión de Secrets
+
+**CRÍTICO**: Este proyecto maneja información sensible mediante variables de entorno:
+
+```bash
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus valores reales
+```
+
+**Variables sensibles requeridas:**
+- `DB_PASSWORD`: Contraseña de base de datos
+- `SENTRY_DSN`: DSN de Sentry (si `SENTRY=true`)
+- `DOCS_TOKEN`: Token de acceso a documentación (producción)
+
+**Ver guía completa**: [`docs/SECURITY.md`](docs/SECURITY.md)
+
+**Auditoría de seguridad:**
+```bash
+npm run security:audit
+```
 
 ### 4. Hardening de Express
 
@@ -563,6 +606,162 @@ npm run docs
 
 ---
 
+## 📋 Logging y Utilidades
+
+### Sistema de Logging Centralizado
+
+El proyecto incluye un sistema de logging estructurado en `utils/logger.js` que reemplaza todas las llamadas a `console.log/warn/error` por logging con contexto y niveles.
+
+**Características:**
+- ✅ 6 niveles de logging (info, warn, error, debug, db, perf)
+- ✅ Timestamps automáticos en formato ISO 8601
+- ✅ Contexto JSON estructurado
+- ✅ Filtrado por ambiente (debug solo en development)
+- ✅ Preparado para integración con APM (Datadog, Loggly)
+
+**Uso:**
+
+```javascript
+import logger from './utils/logger.js';
+
+// Información general
+logger.info('Server started', { port: 8008, env: 'development' });
+
+// Advertencias
+logger.warn('API rate limit approaching', { endpoint: '/api/v1/products', usage: '85%' });
+
+// Errores críticos
+logger.error('Database connection failed', {
+  message: error.message,
+  stack: error.stack,
+  host: 'localhost'
+});
+
+// Debug (solo development)
+logger.debug('Request payload', { body: req.body });
+
+// Operaciones de base de datos
+logger.db('Query executed successfully', { table: 'products', rows: 150 });
+
+// Performance y timeouts
+logger.perf('Request exceeded timeout', { path: '/api/v1/products', duration: '5200ms' });
+```
+
+**Formato de salida:**
+```
+[2025-12-07T19:56:12.190Z] [ERROR] Database connection failed | {"message":"Connection timeout","host":"localhost"}
+```
+
+### Utilidades de Validación
+
+El módulo `utils/validation.js` proporciona funciones de validación y parsing seguro:
+
+#### 1. parseIntSafe(value, defaultValue, min, max)
+
+Parsea números enteros de forma segura con validación de rangos:
+
+```javascript
+import { parseIntSafe } from './utils/validation.js';
+
+// Parsing básico
+const page = parseIntSafe(req.query.page, 1);  // default: 1
+
+// Con validación de rangos
+const pageSize = parseIntSafe(req.query.pageSize, 10, 1, 100);
+// Si pageSize < 1 → retorna 1
+// Si pageSize > 100 → retorna 100
+// Si pageSize es NaN → retorna 10
+```
+
+#### 2. validatePagination(inputData)
+
+Wrapper para validar parámetros de paginación:
+
+```javascript
+import { validatePagination } from './utils/validation.js';
+
+const { page, pageSize } = validatePagination(req.query);
+// page: 1-10000 (default: 1)
+// pageSize: 1-100 (default: 10)
+```
+
+#### 3. sanitizeString(str, maxLength)
+
+Limpia y trunca strings de forma segura:
+
+```javascript
+import { sanitizeString } from './utils/validation.js';
+
+const cleanName = sanitizeString(userInput, 255);
+// Elimina espacios, limita longitud a 255 caracteres
+```
+
+#### 4. validateEnum(value, allowedValues, defaultValue)
+
+Valida que un valor esté en una lista permitida:
+
+```javascript
+import { validateEnum } from './utils/validation.js';
+
+const dataSource = validateEnum(
+  req.query.dataSource,
+  ['sql', 'nosql', 'both', 'fake'],
+  'sql'
+);
+```
+
+### Async Handler Middleware
+
+El middleware `middlewares/async.handler.js` proporciona 3 utilidades para manejo robusto de operaciones asíncronas:
+
+#### 1. asyncHandler(fn)
+
+Wrapper que elimina la necesidad de try-catch en rutas:
+
+```javascript
+import { asyncHandler } from './middlewares/async.handler.js';
+
+router.get('/', asyncHandler(async (req, res) => {
+  const data = await someAsyncOperation();
+  res.json(data);
+  // Los errores son capturados automáticamente
+}));
+```
+
+#### 2. withTimeout(promise, timeout)
+
+Añade timeout a operaciones async:
+
+```javascript
+import { withTimeout } from './middlewares/async.handler.js';
+
+const result = await withTimeout(
+  slowDatabaseQuery(),
+  5000  // timeout en 5 segundos
+);
+```
+
+#### 3. withRetry(fn, options)
+
+Reintentos automáticos con backoff exponencial:
+
+```javascript
+import { withRetry } from './middlewares/async.handler.js';
+
+const data = await withRetry(
+  async () => await externalAPICall(),
+  { 
+    maxRetries: 3,
+    initialDelay: 100,
+    backoffMultiplier: 2
+  }
+);
+```
+
+**Tests:** 12/12 tests passing en `middlewares/async.handler.test.js`
+
+---
+
 ## 📊 Monitoreo y Observabilidad
 
 ### Sentry Integration
@@ -586,19 +785,21 @@ Sentry.init({
 
 ### Logging Estructurado
 
-Todos los errores se loguean con contexto estructurado:
+Todos los logs utilizan el sistema centralizado `utils/logger.js` con contexto estructurado:
 
-```json
-{
-  "timestamp": "2024-12-01T10:30:00.000Z",
-  "method": "GET",
-  "path": "/api/v1/products",
-  "ip": "192.168.1.100",
-  "userAgent": "Mozilla/5.0...",
-  "errorMessage": "Database connection failed",
-  "statusCode": 500
-}
+```javascript
+// Ejemplo de log de error con contexto
+logger.error('Database connection failed', {
+  timestamp: '2024-12-01T10:30:00.000Z',
+  method: 'GET',
+  path: '/api/v1/products',
+  ip: '192.168.1.100',
+  userAgent: 'Mozilla/5.0...',
+  statusCode: 500
+});
 ```
+
+**Ver más:** [Sección Logging y Utilidades](#-logging-y-utilidades)
 
 ### Health Check Endpoints
 
@@ -647,6 +848,58 @@ GET /api
 ## 📝 Licencia
 
 ISC © [@ismaeltorresh](https://github.com/ismaeltorresh)
+
+---
+
+## 🚀 Mejoras Recientes (Diciembre 2025)
+
+### ✅ Refactorización Completada
+
+El proyecto ha sido refactorizado siguiendo las mejores prácticas de Node.js y los estándares de la industria:
+
+#### 1️⃣ **ES Modules Migration** (29 archivos)
+- ✅ Migración completa de CommonJS (`require`) a ES Modules (`import/export`)
+- ✅ Actualización de `package.json` con `"type": "module"`
+- ✅ Configuración de Jest para ES Modules
+- ✅ 100% de compatibilidad con Node.js 20+
+
+#### 2️⃣ **Sistema de Logging Centralizado** (7 archivos)
+- ✅ Nuevo módulo `utils/logger.js` con 6 niveles de logging
+- ✅ Timestamps automáticos en formato ISO 8601
+- ✅ Contexto JSON estructurado para mejor debugging
+- ✅ Filtrado por ambiente (debug solo en development)
+- ✅ Reemplazo de ~15 llamadas a `console.log/warn/error`
+
+#### 3️⃣ **Validación Segura** (6 rutas refactorizadas)
+- ✅ Nuevo módulo `utils/validation.js`
+- ✅ `parseIntSafe()`: Parsing seguro con validación de rangos
+- ✅ `validatePagination()`: Wrapper para paginación consistente
+- ✅ 34 ocurrencias de `parseInt()` eliminadas
+- ✅ Prevención de NaN y valores fuera de rango
+
+#### 4️⃣ **Async/Await Error Handling** (Nuevo middleware)
+- ✅ `asyncHandler()`: Elimina try-catch en rutas
+- ✅ `withTimeout()`: Timeouts automáticos para operaciones async
+- ✅ `withRetry()`: Reintentos con backoff exponencial
+- ✅ 12/12 tests passing en `async.handler.test.js`
+
+#### 5️⃣ **Hardening de Seguridad**
+- ✅ Variables sensibles movidas a `.env` (Sentry DSN, DB credentials)
+- ✅ Script de auditoría de seguridad (`npm run security:audit`)
+- ✅ Documentación de seguridad en `docs/SECURITY.md`
+- ✅ Validación de variables de entorno en startup
+
+#### 6️⃣ **Calidad de Código**
+- ✅ Eliminación de variables globales mutables
+- ✅ Manejo de errores con contexto estructurado
+- ✅ Validación de ambiente en startup (fail-fast)
+
+### 📚 Documentación
+
+Documentación detallada disponible en:
+- `docs/REFACTORING-POINTS-12-20.md` - Logging y validación
+- `docs/PUNTO4_IMPLEMENTACION_COMPLETA.md` - Async error handling
+- `docs/SECURITY.md` - Guía de seguridad
 
 ---
 

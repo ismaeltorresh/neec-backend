@@ -17,8 +17,8 @@ function paginate(items, page = 1, pageSize = 10) {
   return { data, meta };
 }
 
-const { sequelize } = require('../db/connection');
-const boom = require('@hapi/boom');
+import { sequelize } from '../db/connection.js';
+import boom from '@hapi/boom';
 
 /**
  * Paginate a SQL table using COUNT + SELECT with LIMIT/OFFSET.
@@ -136,7 +136,4 @@ async function sqlPaginate({
   };
 }
 
-module.exports = { paginate };
-
-// Export sqlPaginate alongside paginate for a single util entrypoint
-module.exports.sqlPaginate = sqlPaginate;
+export { paginate, sqlPaginate };

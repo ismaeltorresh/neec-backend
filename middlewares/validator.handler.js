@@ -1,4 +1,5 @@
-const boom = require('@hapi/boom');
+import boom from '@hapi/boom';
+import logger from '../utils/logger.js';
 
 function validatorHandler(schema, property){
   return (req, res, next) => {
@@ -17,8 +18,10 @@ function validatorHandler(schema, property){
       }));
       
       // Log validation failure (without sensitive data)
-      console.warn(`[VALIDATION] Failed on ${property}:`, 
-        details.map(d => d.field).join(', '));
+      logger.warn('Validation failed', { 
+        property, 
+        fields: details.map(d => d.field).join(', ')
+      });
       
       next(boom.badRequest('Validation failed', { details }));
     } else {
@@ -29,4 +32,4 @@ function validatorHandler(schema, property){
   }
 }
 
-module.exports = validatorHandler;
+export default validatorHandler;

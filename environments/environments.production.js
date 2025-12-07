@@ -32,4 +32,4 @@ if (missingVars.length > 0) {
   throw new Error(`Missing required environment variables in production: ${missingVars.join(', ')}`);
 }
 
-module.exports = env;
+export default env;
