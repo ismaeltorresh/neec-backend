@@ -20,11 +20,14 @@ function errorLog(err, req, res, next) {
   };
 
   if (env.execution === 'development') {
-    console.error('[ERROR]', JSON.stringify(errorContext, null, 2));
-    console.error('[STACK]', err.stack);
+    import('../utils/logger.js').then(({ default: logger }) => {
+      logger.error('Request error', { ...errorContext, stack: err.stack });
+    });
   } else {
     // In production, log without stack trace
-    console.error('[ERROR]', JSON.stringify(errorContext));
+    import('../utils/logger.js').then(({ default: logger }) => {
+      logger.error('Request error', errorContext);
+    });
   }
 
   next(err);

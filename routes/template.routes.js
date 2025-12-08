@@ -3,11 +3,11 @@ import env from '../environments/index.js';
 import express from 'express';
 import validatorHandler from '../middlewares/validator.handler.js';
 import { asyncHandler, withTimeout } from '../middlewares/async.handler.js';
-import { schema, get, del, post, update } from '../schemas/template.schema.js';
+import { schema, get, del, post, update, paramsSchema } from '../schemas/template.schema.js';
 import { paginated } from '../utils/response.js';
 import { validatePagination } from '../utils/validation.js';
 
-const service = 'template';
+const endpoint = 'template';
 
 const router = express.Router();
 
@@ -43,130 +43,109 @@ router.get('/', validatorHandler(get, 'query'), asyncHandler(async (req, res) =>
   }
   
   const hasData = checkHasData(result, inputData.dataSource);
-  return res.status(hasData ? 200 : 204).json(result);
+  if (!hasData) {
+    return res.status(204).send();
+  }
+  return res.status(200).json(result);
 }));
 
-router.get('/:id', validatorHandler(get, 'query'), async (req, res, next) => {
+router.get('/:id', 
+  validatorHandler(paramsSchema, 'params'),
+  validatorHandler(get, 'query'), 
+  asyncHandler(async (req, res) => {
   const inputData = req.query;
   inputData.id = req.params.id;
-  try {
-    let result;
+  let result;
 
-    if (inputData.dataSource === 'sql') {
-      result = await sqlFindById(inputData);
-    } else if (inputData.dataSource === 'nosql') {
-      result = nosqlFindById(inputData);
-    } else if (inputData.dataSource === 'both') {
-      result = {
-        sql: await sqlFindById(inputData),
-        nosql: nosqlFindById(inputData),
-      };
-    } else if (inputData.dataSource === 'fake') {
-      result = getFakeById(inputData);
-    } else {
-      return next(
-        boom.badRequest(`${inputData.dataSource} is not a valid data source`)
-      );
-    }
-
-    const hasData = checkHasDataById(result, inputData.dataSource);
-    return res.status(hasData ? 200 : 204).json(result);
-  } catch (error) {
-    if (error && error.isBoom) return next(error);
-    return next(
-      boom.internal(`An error occurred while retrieving the record from ${service} service`)
-    );
+  if (inputData.dataSource === 'sql') {
+    result = await sqlFindById(inputData);
+  } else if (inputData.dataSource === 'nosql') {
+    result = nosqlFindById(inputData);
+  } else if (inputData.dataSource === 'both') {
+    result = {
+      sql: await sqlFindById(inputData),
+      nosql: nosqlFindById(inputData),
+    };
+  } else if (inputData.dataSource === 'fake') {
+    result = getFakeById(inputData);
+  } else {
+    throw boom.badRequest(`${inputData.dataSource} is not a valid data source`);
   }
-});
 
-router.post('/', validatorHandler(post, 'body'), async (req, res, next) => {
+  const hasData = checkHasDataById(result, inputData.dataSource);
+  if (!hasData) {
+    return res.status(204).send();
+  }
+  return res.status(200).json(result);
+}));
+
+router.post('/', validatorHandler(post, 'body'), asyncHandler(async (req, res) => {
   const inputData = req.body;
-  try {
-    let result;
+  let result;
 
-    if (inputData.dataSource === 'sql') {
-      result = await sqlCreate(inputData);
-    } else if (inputData.dataSource === 'nosql') {
-      result = await nosqlCreate(inputData);
-    } else if (inputData.dataSource === 'both') {
-      result = {
-        sql: await sqlCreate(inputData),
-        nosql: await nosqlCreate(inputData),
-      };
-    } else {
-      return next(
-        boom.badRequest(`${inputData.dataSource} is not a valid data source`)
-      );
-    }
-
-    return res.status(201).json(result);
-  } catch (error) {
-    if (error && error.isBoom) return next(error);
-    return next(
-      boom.internal(`An error occurred while creating the record from ${service} service`)
-    );
+  if (inputData.dataSource === 'sql') {
+    result = await sqlCreate(inputData);
+  } else if (inputData.dataSource === 'nosql') {
+    result = await nosqlCreate(inputData);
+  } else if (inputData.dataSource === 'both') {
+    result = {
+      sql: await sqlCreate(inputData),
+      nosql: await nosqlCreate(inputData),
+    };
+  } else {
+    throw boom.badRequest(`${inputData.dataSource} is not a valid data source`);
   }
-});
 
-router.patch('/:id', validatorHandler(update, 'body'), async (req, res, next) => {
+  return res.status(201).json(result);
+}));
+
+router.patch('/:id', 
+  validatorHandler(paramsSchema, 'params'),
+  validatorHandler(update, 'body'), 
+  asyncHandler(async (req, res) => {
   const inputData = req.body;
   inputData.id = req.params.id;
-  try {
-    let result;
+  let result;
 
-    if (inputData.dataSource === 'sql') {
-      result = await sqlUpdate(inputData);
-    } else if (inputData.dataSource === 'nosql') {
-      result = await nosqlUpdate(inputData);
-    } else if (inputData.dataSource === 'both') {
-      result = {
-        sql: await sqlUpdate(inputData),
-        nosql: await nosqlUpdate(inputData),
-      };
-    } else {
-      return next(
-        boom.badRequest(`${inputData.dataSource} is not a valid data source`)
-      );
-    }
-
-    return res.status(200).json(result);
-  } catch (error) {
-    if (error && error.isBoom) return next(error);
-    return next(
-      boom.internal(`An error occurred while updating the record from ${service} service`)
-    );
+  if (inputData.dataSource === 'sql') {
+    result = await sqlUpdate(inputData);
+  } else if (inputData.dataSource === 'nosql') {
+    result = await nosqlUpdate(inputData);
+  } else if (inputData.dataSource === 'both') {
+    result = {
+      sql: await sqlUpdate(inputData),
+      nosql: await nosqlUpdate(inputData),
+    };
+  } else {
+    throw boom.badRequest(`${inputData.dataSource} is not a valid data source`);
   }
-});
 
-router.delete('/:id', validatorHandler(del, 'body'), async (req, res, next) => {
+  return res.status(200).json(result);
+}));
+
+router.delete('/:id', 
+  validatorHandler(paramsSchema, 'params'),
+  validatorHandler(del, 'body'), 
+  asyncHandler(async (req, res) => {
   const inputData = req.body;
   inputData.id = req.params.id;
-  try {
-    let result;
+  let result;
 
-    if (inputData.dataSource === 'sql') {
-      result = await sqlDelete(inputData);
-    } else if (inputData.dataSource === 'nosql') {
-      result = await nosqlDelete(inputData);
-    } else if (inputData.dataSource === 'both') {
-      result = {
-        sql: await sqlDelete(inputData),
-        nosql: await nosqlDelete(inputData),
-      };
-    } else {
-      return next(
-        boom.badRequest(`${inputData.dataSource} is not a valid data source`)
-      );
-    }
-
-    return res.status(200).json(result);
-  } catch (error) {
-    if (error && error.isBoom) return next(error);
-    return next(
-      boom.internal(`An error occurred while deleting the record from ${service} service`)
-    );
+  if (inputData.dataSource === 'sql') {
+    result = await sqlDelete(inputData);
+  } else if (inputData.dataSource === 'nosql') {
+    result = await nosqlDelete(inputData);
+  } else if (inputData.dataSource === 'both') {
+    result = {
+      sql: await sqlDelete(inputData),
+      nosql: await nosqlDelete(inputData),
+    };
+  } else {
+    throw boom.badRequest(`${inputData.dataSource} is not a valid data source`);
   }
-});
+
+  return res.status(200).json(result);
+}));
 
 /**
  * Retrieves a paginated list of template from the database using the provided filters, search criteria, and sorting options.
@@ -195,7 +174,7 @@ async function sqlList(inputData) {
   };
   const search = inputData.q ? { q: inputData.q, columns: ['brand', 'code', 'description', 'sumary'] } : undefined;
   const result = await sqlPaginate({
-    table: service,
+    table: endpoint,
     recordStatus: inputData.recordStatus,
     page,
     pageSize,
@@ -220,7 +199,7 @@ async function sqlList(inputData) {
 async function nosqlList(inputData) {
   const nosqlMock = await import('../utils/nosqlMock.js');
   const { page, pageSize } = validatePagination(inputData);
-  const paged = nosqlMock.paginateList(service, page, pageSize);
+  const paged = nosqlMock.paginateList(endpoint, page, pageSize);
   return paged;
 }
 
@@ -232,7 +211,7 @@ async function nosqlList(inputData) {
  */
 async function nosqlFindById(inputData) {
   const nosqlMock = await import('../utils/nosqlMock.js');
-  const record = nosqlMock.findById(service, inputData.id) || {};
+  const record = nosqlMock.findById(endpoint, inputData.id) || {};
   return record;
 }
 
@@ -243,7 +222,7 @@ async function nosqlFindById(inputData) {
  * @returns {Promise<Object>} Paginated fake data.
  */
 async function getFakeList(inputData) {
-  const { createRequire } = await import("module"); const __require = createRequire(import.meta.url); const fakeData = __require("../test/fakedata.json");
+  const fakeData = (await import('../test/fakedata.js')).default;
   const list = fakeData.template || [];
   const { page, pageSize } = validatePagination(inputData);
   return paginated(list, page, pageSize);
@@ -256,7 +235,7 @@ async function getFakeList(inputData) {
  * @returns {Object} The matching fake record if found.
  */
 async function getFakeById(inputData) {
-  const { createRequire } = await import("module"); const __require = createRequire(import.meta.url); const fakeData = __require("../test/fakedata.json");
+  const fakeData = (await import('../test/fakedata.js')).default;
   const list = fakeData.template || [];
   return list.find(item => item.id === inputData.id) || {};
 }

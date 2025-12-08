@@ -8,6 +8,10 @@ const tracesSampleRate = isProd ? (process.env.SENTRY_TRACES_SAMPLE_RATE ? Numbe
 const profilesSampleRate = isProd ? (process.env.SENTRY_PROFILES_SAMPLE_RATE ? Number(process.env.SENTRY_PROFILES_SAMPLE_RATE) : 0.01) : 1.0;
 
 // Initialize Sentry only if DSN is provided
+if (env.sentry && !process.env.SENTRY_DSN) {
+  throw new Error('SENTRY enabled in environment but SENTRY_DSN not provided');
+}
+
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -18,6 +22,4 @@ if (process.env.SENTRY_DSN) {
     profilesSampleRate,
   });
   console.info('Sentry initialized successfully');
-} else if (env.sentry) {
-  console.warn('Sentry enabled in environment but SENTRY_DSN not provided');
 }

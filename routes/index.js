@@ -10,12 +10,7 @@ import templateRoutes from './template.routes.js';
  * @description
  * Esta función centraliza el montaje de todos los módulos de rutas del sistema.
  * Todas las rutas quedan disponibles bajo el prefijo /api/v1:
- * - /api/v1/products
- * - /api/v1/people
- * - /api/v1/address
- * - /api/v1/blogs
- * - /api/v1/users
- * - /api/v1/template
+ * - /api/v1/template (servicio de ejemplo/template)
  */
 function routesApp(app) {
   const router = express.Router();

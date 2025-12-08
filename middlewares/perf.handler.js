@@ -3,7 +3,7 @@ import env from '../environments/index.js';
 import logger from '../utils/logger.js';
 
 function perfTimeout(req, res, next) {
-  const timeoutMs = env.requestTimeout || (process.env.REQUEST_TIMEOUT ? Number(process.env.REQUEST_TIMEOUT) : 20000);
+  const timeoutMs = env.requestTimeout;
   
   // Set a timer to abort the request
   const timer = setTimeout(() => {

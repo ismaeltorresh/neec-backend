@@ -123,8 +123,7 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 
 ### Desarrollo y Testing
 - **Testing**: Jest 29.7, Supertest 6.3
-- **Linting**: ESLint 9.8 + Prettier
-- **Build**: Webpack 5.95
+- **Linting**: ESLint 9.8
 - **Dev Server**: Nodemon 3.1
 
 ### Monitoreo
@@ -238,14 +237,8 @@ npm run dev
 ### Producción
 
 ```bash
-# Construir bundle optimizado
-npm run build
-
 # Iniciar servidor en modo producción
 npm start
-
-# O iniciar desde el bundle (webpack)
-npm run prod
 ```
 
 ### Testing
@@ -289,8 +282,7 @@ neec-backend/
 │   ├── database.sql           # Schema SQL para MariaDB
 │   └── sqlSchema.js           # Definición de modelos (opcional)
 ├── docs/
-│   ├── openapi.yaml           # Especificación OpenAPI básica
-│   └── openapi-full.yaml      # Especificación OpenAPI completa
+│   └── SECURITY.md            # Guía de seguridad
 ├── environments/
 │   ├── index.js               # Loader de entornos
 │   ├── environments.development.js
@@ -303,26 +295,12 @@ neec-backend/
 │   └── validator.handler.js   # Validación con Joi
 ├── routes/
 │   ├── index.js               # Router principal (monta todos los endpoints)
-│   ├── products.routes.js     # CRUD de productos
-│   ├── people.routes.js       # CRUD de personas
-│   ├── address.routes.js      # CRUD de direcciones
-│   ├── blogs.routes.js        # CRUD de blogs
-│   ├── users.routes.js        # CRUD de usuarios
-│   ├── template.routes.js     # Template para nuevos servicios
-│   └── *.routes.test.js       # Tests de integración
+│   └── template.routes.js     # Template para nuevos servicios
 ├── schemas/
-│   ├── products.schema.js     # Validación Joi para productos
-│   ├── people.schema.js
-│   ├── address.schema.js
-│   ├── blogs.schema.js
-│   ├── users.schema.js
-│   └── template.schema.js
+│   └── template.schema.js     # Validación Joi template
 ├── test/
-│   ├── endpoint.test.sh       # Script de testing de endpoints
-│   ├── endpointData.test.json
 │   ├── fakedata.json          # Datos mock para testing
-│   ├── nosqlMock.test.js
-│   └── sqlPagination.test.js
+│   └── fakedata.js            # Generador de datos fake
 ├── tools/
 │   └── serve-docs.js          # Servidor standalone para docs
 ├── utils/
@@ -335,12 +313,10 @@ neec-backend/
 ├── .env.example               # Template de variables de entorno
 ├── .eslintrc.json             # Configuración ESLint
 ├── .gitignore
-├── createservice.js           # 🔧 CLI para generar nuevos servicios
 ├── index.js                   # 🚀 Entry point de la aplicación
 ├── instrument.js              # Inicialización de Sentry
 ├── package.json
-├── README.md
-└── webpack.config.js          # Configuración de build
+└── README.md
 ```
 
 ---
@@ -356,25 +332,20 @@ Todos los endpoints están montados bajo el prefijo `/api/v1`.
 | **Root**     | `GET /`               | Welcome message          |
 | **Info**     | `GET /api`            | Información de la API    |
 | **Docs**     | `GET /docs`           | Swagger UI (OpenAPI)     |
-| **Products** | `/api/v1/products`    | CRUD de productos        |
-| **People**   | `/api/v1/people`      | CRUD de personas         |
-| **Address**  | `/api/v1/address`     | CRUD de direcciones      |
-| **Blogs**    | `/api/v1/blogs`       | CRUD de blogs            |
-| **Users**    | `/api/v1/users`       | CRUD de usuarios         |
 | **Template** | `/api/v1/template`    | Template de referencia   |
 
-### Ejemplo: Products Endpoints
+### Ejemplo: Template Endpoints
 
 ```
-GET    /api/v1/products         # Listar productos (paginado)
-GET    /api/v1/products/:id     # Obtener un producto
-POST   /api/v1/products         # Crear producto
-PATCH  /api/v1/products/:id     # Actualizar producto
-DELETE /api/v1/products/:id     # Eliminar producto
-GET    /api/v1/products/schema  # Ver schema de validación (dev only)
+GET    /api/v1/template         # Listar registros (paginado)
+GET    /api/v1/template/:id     # Obtener un registro
+POST   /api/v1/template         # Crear registro
+PATCH  /api/v1/template/:id     # Actualizar registro
+DELETE /api/v1/template/:id     # Eliminar registro
+GET    /api/v1/template/schema  # Ver schema de validación (dev only)
 ```
 
-### Query Parameters (GET /api/v1/products)
+### Query Parameters (GET /api/v1/template)
 
 ```bash
 # Paginación
@@ -504,7 +475,7 @@ Helmet configura automáticamente:
 npm test
 
 # Tests específicos
-npm test products.routes.test.js
+npm test async.handler.test.js
 ```
 
 ### Tipos de Tests
@@ -516,28 +487,21 @@ npm test products.routes.test.js
 ### Ejemplo de Test
 
 ```javascript
-// routes/products.routes.test.js
-const request = require('supertest');
-const express = require('express');
-const productsRoutes = require('./products.routes');
+// routes/template.routes.test.js
+import request from 'supertest';
+import express from 'express';
+import templateRoutes from './template.routes.js';
 
-describe('GET /api/v1/products', () => {
-  it('should return paginated products', async () => {
+describe('GET /api/v1/template', () => {
+  it('should return paginated records', async () => {
     const response = await request(app)
-      .get('/api/v1/products?dataSource=fake&recordStatus=true')
+      .get('/api/v1/template?dataSource=fake&recordStatus=true')
       .expect(200);
     
     expect(response.body.data).toBeInstanceOf(Array);
     expect(response.body.meta).toHaveProperty('total');
   });
 });
-```
-
-### Testing E2E con Shell Script
-
-```bash
-cd test
-sh endpoint.test.sh
 ```
 
 ---
@@ -580,7 +544,7 @@ Ahora tendrás disponible:
 
 ### Swagger UI
 
-La documentación interactiva OpenAPI está disponible en:
+La documentación interactiva está disponible en:
 
 ```
 http://localhost:8008/docs
@@ -590,19 +554,7 @@ http://localhost:8008/docs
 - En `development`: Acceso libre
 - En `production`: Requiere header `X-DOCS-TOKEN` o query param `?docsToken=<token>`
 
-### Alternativa: Servidor Standalone
-
-Si `swagger-ui-express` no está instalado:
-
-```bash
-npm run docs
-# Abre http://localhost:8080
-```
-
-### Archivos de Especificación
-
-- `docs/openapi.yaml` - Especificación básica
-- `docs/openapi-full.yaml` - Especificación completa con todos los schemas
+**Nota:** El proyecto incluye soporte para Swagger UI si está instalado. Puedes generar tu propia especificación OpenAPI 3.0+ basada en los schemas Joi del proyecto.
 
 ---
 
@@ -628,7 +580,7 @@ import logger from './utils/logger.js';
 logger.info('Server started', { port: 8008, env: 'development' });
 
 // Advertencias
-logger.warn('API rate limit approaching', { endpoint: '/api/v1/products', usage: '85%' });
+logger.warn('API rate limit approaching', { endpoint: '/api/v1/template', usage: '85%' });
 
 // Errores críticos
 logger.error('Database connection failed', {
@@ -641,10 +593,10 @@ logger.error('Database connection failed', {
 logger.debug('Request payload', { body: req.body });
 
 // Operaciones de base de datos
-logger.db('Query executed successfully', { table: 'products', rows: 150 });
+logger.db('Query executed successfully', { table: 'template', rows: 150 });
 
 // Performance y timeouts
-logger.perf('Request exceeded timeout', { path: '/api/v1/products', duration: '5200ms' });
+logger.perf('Request exceeded timeout', { path: '/api/v1/template', duration: '5200ms' });
 ```
 
 **Formato de salida:**
@@ -792,7 +744,7 @@ Todos los logs utilizan el sistema centralizado `utils/logger.js` con contexto e
 logger.error('Database connection failed', {
   timestamp: '2024-12-01T10:30:00.000Z',
   method: 'GET',
-  path: '/api/v1/products',
+  path: '/api/v1/template',
   ip: '192.168.1.100',
   userAgent: 'Mozilla/5.0...',
   statusCode: 500
@@ -894,12 +846,17 @@ El proyecto ha sido refactorizado siguiendo las mejores prácticas de Node.js y 
 - ✅ Manejo de errores con contexto estructurado
 - ✅ Validación de ambiente en startup (fail-fast)
 
+#### 7️⃣ **Limpieza del Proyecto** (Diciembre 2025)
+- ✅ Eliminación de dependencias no utilizadas (9 paquetes, 79 total con transitivas)
+- ✅ Eliminación de servicios de ejemplo (products, people, address, blogs, users)
+- ✅ Eliminación de archivos obsoletos y documentación redundante
+- ✅ 0 vulnerabilidades después de npm audit fix
+- ✅ Proyecto optimizado con solo servicio template como base
+
 ### 📚 Documentación
 
-Documentación detallada disponible en:
-- `docs/REFACTORING-POINTS-12-20.md` - Logging y validación
-- `docs/PUNTO4_IMPLEMENTACION_COMPLETA.md` - Async error handling
-- `docs/SECURITY.md` - Guía de seguridad
+Documentación disponible:
+- `docs/SECURITY.md` - Guía de seguridad y gestión de secrets
 
 ---
 

@@ -74,18 +74,24 @@ async function sqlPaginate({
   let extraClauses = '';
   if (filters && typeof filters === 'object' && Array.isArray(allowedFilters) && allowedFilters.length) {
     Object.keys(filters).forEach((k) => {
-      if (allowedFilters.includes(k) && /^[a-zA-Z0-9_]+$/.test(k)) {
-        const placeholder = `f_${k}`;
-        // Support wildcard searches if value contains %
-        merged[placeholder] = filters[k];
-        if (typeof filters[k] === 'string' && (filters[k].includes('%') || filters[k].includes('*'))) {
-          // convert * to % for convenience
-          const v = filters[k].replace(/\*/g, '%');
-          merged[placeholder] = v;
-          extraClauses += ` AND ${k} LIKE :${placeholder}`;
-        } else {
-          extraClauses += ` AND ${k} = :${placeholder}`;
-        }
+      // Strict validation: column must be in allowedFilters AND match regex
+      if (!allowedFilters.includes(k)) {
+        throw boom.badRequest(`Filter column '${k}' is not allowed`);
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(k)) {
+        throw boom.badRequest(`Invalid filter column name '${k}'`);
+      }
+      
+      const placeholder = `f_${k}`;
+      // Support wildcard searches if value contains %
+      merged[placeholder] = filters[k];
+      if (typeof filters[k] === 'string' && (filters[k].includes('%') || filters[k].includes('*'))) {
+        // convert * to % for convenience
+        const v = filters[k].replace(/\*/g, '%');
+        merged[placeholder] = v;
+        extraClauses += ` AND ${k} LIKE :${placeholder}`;
+      } else {
+        extraClauses += ` AND ${k} = :${placeholder}`;
       }
     });
   }
@@ -94,10 +100,14 @@ async function sqlPaginate({
   if (search && search.q && Array.isArray(search.columns) && search.columns.length) {
     const qPlaceholder = 'q_search';
     merged[qPlaceholder] = `%${search.q}%`;
-    const likes = search.columns.filter(c => /^[a-zA-Z0-9_]+$/.test(c)).map(c => `${c} LIKE :${qPlaceholder}`);
-    if (likes.length) {
-      extraClauses += ` AND (${likes.join(' OR ')})`;
+    // Strict validation: all search columns must match regex
+    const validColumns = search.columns.filter(c => /^[a-zA-Z0-9_]+$/.test(c));
+    if (validColumns.length === 0) {
+      throw boom.badRequest('No valid search columns provided');
     }
+    const likes = validColumns.map(c => `${c} LIKE :${qPlaceholder}`);
+    extraClauses += ` AND (${likes.join(' OR ')})`;
+  }
   }
 
   const finalWhere = `${whereClause}${extraClauses}`;

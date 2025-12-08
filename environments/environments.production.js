@@ -3,6 +3,8 @@ const env = {
   service: 'neec',
   server: 'https://neec-backend.loha.mx',
   port: process.env.PORT || 8008,
+  bodyLimit: process.env.BODY_LIMIT || '100kb',
+  requestTimeout: process.env.REQUEST_TIMEOUT ? Number(process.env.REQUEST_TIMEOUT) : 20000,
   whiteList: ['http://localhost'],
   audience: process.env.AUDIENCE,
   issuerBaseURL: process.env.ISSUER_BASE_URL,
@@ -11,6 +13,7 @@ const env = {
   oauth: process.env.OAUTH === 'true',
   sentry: process.env.SENTRY === 'true',
   algorithms: ['RS256'],
+  docsToken: process.env.DOCS_TOKEN,
   db: {
     maria: {
       host: process.env.DB_HOST || 'localhost',

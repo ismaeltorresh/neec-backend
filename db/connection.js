@@ -54,7 +54,7 @@ const sequelize = new Sequelize(
     host: env.db.maria.host,
     port: env.db.maria.port,
     dialect: env.db.maria.dialect,
-    logging: env.execution === 'development' ? console.log : false,
+    logging: env.execution === 'development' ? (msg) => logger.info(msg) : false,
     pool: buildPoolConfig(),
   }
 );

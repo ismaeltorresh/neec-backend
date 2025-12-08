@@ -76,7 +76,7 @@ export const validateAsync = (validatorMiddleware, handler) => {
  * 
  * @example
  * const result = await withRetry(async () => {
- *   return await db.query('SELECT * FROM users');
+ *   return await db.query('SELECT * FROM records');
  * }, 3, 1000);
  */
 export const withRetry = async (operation, maxRetries = 3, delay = 1000) => {

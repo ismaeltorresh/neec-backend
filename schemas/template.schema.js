@@ -57,6 +57,9 @@ const post = Joi.object({
   useAs: schema.useAs.required(),
 });
 
-// (duplicate declarations removed)
+// Schema for route params validation
+const paramsSchema = Joi.object({
+  id: schema.id.required(),
+});
 
-export { schema, del, get, update, post };
+export { schema, del, get, update, post, paramsSchema };

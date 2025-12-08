@@ -13,10 +13,6 @@ echo ""
 # Lista de archivos de rutas a refactorizar
 ROUTE_FILES=(
   "template.routes.js"
-  "people.routes.js"
-  "address.routes.js"
-  "users.routes.js"
-  "blogs.routes.js"
 )
 
 for file in "${ROUTE_FILES[@]}"; do
