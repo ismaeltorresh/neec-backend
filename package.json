@@ -37,6 +37,7 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.0.0",
     "joi": "^17.13.3",
+    "mariadb": "^3.4.5",
     "mysql2": "^3.14.0",
     "sequelize": "^6.37.7",
     "swagger-ui-express": "^4.6.3",
