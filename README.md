@@ -2,6 +2,8 @@
 
 > Backend API REST construido con Node.js, Express.js, TypeScript, Zod y TypeORM sobre MariaDB/MySQL
 
+**[🇬🇧 English Version(README-EN.md)]** | **🇪🇸 Versión en Español**
+
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![TypeORM](https://img.shields.io/badge/TypeORM-0.3+-E83524?logo=typeorm&logoColor=white)](https://typeorm.io/)
