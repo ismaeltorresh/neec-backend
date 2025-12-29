@@ -22,6 +22,7 @@ export interface Environment {
   sentry: boolean;
   algorithms: string[];
   docsToken?: string;
+  skipDatabase?: boolean;
   db: {
     maria: {
       host: string;

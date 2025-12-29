@@ -22,6 +22,7 @@ const env: Environment = {
   sentry: process.env.SENTRY === 'true',
   algorithms: ['RS256'],
   docsToken: process.env.DOCS_TOKEN,
+  skipDatabase: process.env.SKIP_DATABASE === 'true',
   db: {
     maria: {
       host: process.env.DB_HOST || 'localhost',
@@ -34,12 +35,14 @@ const env: Environment = {
   }
 };
 
-// Validaciones obligatorias para producción
-const requiredEnvVars = ['DB_USER', 'DB_PASSWORD', 'DB_NAME'];
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+// Validaciones obligatorias para producción (solo si no se omite la base de datos)
+if (!env.skipDatabase) {
+  const requiredEnvVars = ['DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
-if (missingVars.length > 0) {
-  throw new Error(`Missing required environment variables in production: ${missingVars.join(', ')}`);
+  if (missingVars.length > 0) {
+    throw new Error(`Missing required environment variables in production: ${missingVars.join(', ')}`);
+  }
 }
 
 export default env;

@@ -111,6 +111,12 @@ export const AppDataSource = new DataSource(dataSourceOptions);
  * @throws If connection fails
  */
 export async function initializeDatabase(): Promise<void> {
+  // Skip database connection if configured
+  if (env.skipDatabase) {
+    logger.info('Database connection skipped (SKIP_DATABASE=true)');
+    return;
+  }
+
   try {
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();

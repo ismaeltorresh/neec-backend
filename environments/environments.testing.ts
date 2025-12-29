@@ -22,6 +22,7 @@ const env: Environment = {
   sentry: false,
   algorithms: ['RS256'],
   docsToken: process.env.DOCS_TOKEN || 'test-token',
+  skipDatabase: process.env.SKIP_DATABASE === 'true',
   db: {
     maria: {
       host: process.env.DB_HOST || 'localhost',
