@@ -1,291 +1,307 @@
 # NEEC Backend
 
-> Backend API REST para la aplicación NEEC construido con Node.js, Express.js, TypeScript y MariaDB/MySQL
+> Backend API REST construido con Node.js, Express.js, TypeScript, Zod y TypeORM sobre MariaDB/MySQL
 
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeORM](https://img.shields.io/badge/TypeORM-0.3+-E83524?logo=typeorm&logoColor=white)](https://typeorm.io/)
+[![Zod](https://img.shields.io/badge/Zod-3.22+-3E67B1?logo=zod&logoColor=white)](https://zod.dev/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.19-000000?logo=express&logoColor=white)](https://expressjs.com/)
-[![ES Modules](https://img.shields.io/badge/ES-Modules-F7DF1E?logo=javascript&logoColor=black)](https://nodejs.org/api/esm.html)
-[![Tests](https://img.shields.io/badge/Tests-12%2F12_passing-success?logo=jest)](https://jestjs.io/)
+[![Tests](https://img.shields.io/badge/Tests-Passing-success?logo=jest)](https://jestjs.io/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-> **✨ Últimas mejoras:** Migración completa a TypeScript, sistema de logging centralizado, validación segura con tipos, async error handling con 12 tests, y ES Modules migration completa.
+---
 
 ## 📋 Tabla de Contenidos
 
-- [Tabla de Contenidos](#-tabla-de-contenidos)
 - [Descripción](#-descripción)
 - [Arquitectura](#-arquitectura)
-- [Tecnologías](#-tecnologías)
-- [Requisitos Previos](#-requisitos-previos)
+- [Stack Tecnológico](#-stack-tecnológico)
 - [Instalación](#-instalación)
 - [Configuración](#-configuración)
-- [Scripts Disponibles](#-scripts-disponibles)
-- [CI/CD Pipeline](#-cicd-pipeline)
+- [Scripts](#-scripts)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Endpoints API](#-endpoints-api)
-- [Seguridad](#-seguridad)
+- [Uso de la API](#-uso-de-la-api)
+- [Sistema de Validación (Zod)](#-sistema-de-validación-zod)
+- [TypeORM y Migraciones](#-typeorm-y-migraciones)
 - [Testing](#-testing)
-- [Generador de Servicios](#-generador-de-servicios)
-- [Documentación API](#-documentación-api)
-- [Logging y Utilidades](#-logging-y-utilidades)
-- [Monitoreo y Observabilidad](#-monitoreo-y-observabilidad)
-- [Mejoras Recientes](#-mejoras-recientes-diciembre-2025)
-- [Contribución](#-contribución)
+- [Seguridad](#-seguridad)
+- [CI/CD](#-cicd)
+- [Documentación Adicional](#-documentación-adicional)
 
 ---
 
 ## 📖 Descripción
 
-NEEC Backend es una API REST construida siguiendo los principios de **arquitectura en capas** (Layered Architecture), diseñada para proporcionar servicios seguros, escalables y de alto rendimiento. El proyecto implementa las mejores prácticas de la industria basadas en estándares OWASP, CIS y NIST.
+**NEEC Backend** es una API REST empresarial construida con arquitectura en capas siguiendo principios SOLID, Domain-Driven Design (DDD) y las mejores prácticas de seguridad (OWASP, NIST).
 
-### Características Principales
+### ✨ Características Principales
 
-- ✅ **TypeScript**: Migración completa con tipos estrictos y seguridad en tiempo de compilación
-- ✅ **Arquitectura en Capas**: Separación clara entre Routes, Controllers, Services y Repositories
-- ✅ **Validación Robusta**: Validación de entrada con **Zod** + inferencia automática de tipos TypeScript
-- ✅ **Logging Centralizado**: Sistema de logging estructurado con 6 niveles (info, warn, error, debug, db, perf)
-- ✅ **Async/Await Error Handling**: Middleware asyncHandler, withTimeout, withRetry con 12 tests
-- ✅ **Seguridad Hardening**: Helmet, CORS, sanitización de inputs, gestión segura de errores
-- ✅ **Autenticación OAuth 2.0**: Integración con Auth0 (JWT Bearer tokens)
-- ✅ **Multi-DataSource**: Soporte para SQL, NoSQL, mock y fake data
-- ✅ **Paginación Avanzada**: Sistema de paginación tipado con filtros, búsqueda y ordenamiento
-- ✅ **Monitoreo Sentry**: Tracking de errores y profiling en producción
-- ✅ **Testing**: Suite de tests con Jest y ts-jest
-- ✅ **Documentación OpenAPI**: Especificación OpenAPI 3.0+ con Swagger UI
-- ✅ **Generador de Servicios**: CLI para scaffold automático de nuevos endpoints
+- ✅ **TypeScript Strict Mode** - Seguridad de tipos en tiempo de compilación
+- ✅ **TypeORM** - ORM TypeScript-first con decoradores, migraciones versionadas y Repository Pattern
+- ✅ **Zod** - Validación con inferencia automática de tipos (Single Source of Truth)
+- ✅ **Arquitectura en Capas** - Routes → Services → Repositories → Database
+- ✅ **Async Error Handling** - Middlewares `asyncHandler`, `withTimeout`, `withRetry`
+- ✅ **Logging Estructurado** - Sistema centralizado con 6 niveles (info, warn, error, debug, db, perf)
+- ✅ **OAuth 2.0** - Integración con Auth0 (JWT Bearer tokens)
+- ✅ **Rate Limiting** - Protección contra brute-force y DoS
+- ✅ **Security Hardening** - Helmet, CORS, input sanitization
+- ✅ **CI/CD** - GitHub Actions con build, tests y deploy automatizado
 
 ---
 
 ## 🏗️ Arquitectura
 
-El proyecto sigue una **arquitectura en capas** estricta para garantizar la separación de responsabilidades:
+Arquitectura en capas con separación estricta de responsabilidades:
 
 ```
 ┌─────────────────────────────────────────┐
-│         HTTP Layer (Express)            │
-│  ┌──────────────────────────────────┐   │
-│  │   Middlewares (Auth, CORS,       │   │
-│  │   Helmet, Validation, Error)     │   │
-│  └──────────────────────────────────┘   │
-└─────────────────────────────────────────┘
-                  ▼
-┌─────────────────────────────────────────┐
+│      HTTP Layer (Express.js)            │
+│  Middlewares: Auth, CORS, Helmet,       │
+│  Rate Limit, Error Handler              │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
 │      Routes/Controllers Layer           │
-│  • Manejo de req/res HTTP               │
-│  • Validación de entrada (Zod)          │
-│  • Llamada a servicios                  │
-│  • Respuestas HTTP estandarizadas       │
-└─────────────────────────────────────────┘
-                  ▼
-┌─────────────────────────────────────────┐
+│  • HTTP req/res handling                │
+│  • Zod validation                       │
+│  • Service orchestration                │
+│  • HTTP status codes                    │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
 │         Services Layer                  │
-│  • Lógica de negocio pura               │
-│  • Agnóstico al protocolo HTTP          │
-│  • Orquestación de múltiples repos      │
-│  • Manejo de errores tipados (Boom)     │
-└─────────────────────────────────────────┘
-                  ▼
-┌─────────────────────────────────────────┐
-│      Repository/DAO Layer               │
-│  • Abstracción de la capa de datos      │
-│  • TypeORM Repositories + Entities      │
-│  • Operaciones CRUD                     │
-└─────────────────────────────────────────┘
-                  ▼
-┌─────────────────────────────────────────┐
-│         Database (MariaDB/MySQL)        │
+│  • Business logic                       │
+│  • Transaction orchestration            │
+│  • Error handling (Boom)                │
+│  • Cross-repository operations          │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│      Repository Layer                   │
+│  • TypeORM repositories                 │
+│  • Data access abstraction              │
+│  • Query building                       │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│      Entities Layer (TypeORM)           │
+│  • Database models (decorators)         │
+│  • Relations                            │
+│  • Lifecycle hooks                      │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│         Database (MariaDB)              │
 └─────────────────────────────────────────┘
 ```
 
-### Principios de Diseño
+### Flujo de Datos
 
-1. **Separation of Concerns**: Cada capa tiene una responsabilidad única y bien definida
-2. **Dependency Injection**: Las capas superiores dependen de interfaces, no de implementaciones
-3. **Error Boundaries**: Manejo centralizado de errores con @hapi/boom
-4. **Input Validation**: Toda entrada de usuario es validada con **Zod** antes de procesarse (con inferencia automática de tipos)
-5. **Security by Default**: Helmet, CORS, rate limiting, y sanitización de inputs
+```
+Request → Middleware → Controller → Zod Validation → Service → Repository → TypeORM → Database
+                                                                                        ↓
+Response ← Middleware ← Controller ← Service ← Repository ← TypeORM Entity ← Database
+```
 
 ---
 
-## 🛠️ Tecnologías
+## 🛠️ Stack Tecnológico
 
 ### Core
-- **Runtime**: Node.js v20 LTS+
-- **Framework**: Express.js 4.19
-- **Lenguaje**: TypeScript 5.0+ (compilado a JavaScript ES2022 con ESM)
+- **Node.js** v20 LTS
+- **TypeScript** 5.0+ (strict mode, ES2022 target)
+- **Express.js** 4.19
 
 ### Base de Datos
-- **ORM**: TypeORM (TypeScript-first ORM con decoradores)
-- **Driver**: mysql2 (compatible con MariaDB)
-- **DBMS**: MariaDB / MySQL
+- **TypeORM** 0.3+ (decoradores, migraciones, Query Builder)
+- **mysql2** (driver para MariaDB/MySQL)
+- **MariaDB** 10.x / **MySQL** 8.x
+
+### Validación y Tipos
+- **Zod** 3.22 - Validación + inferencia de tipos
+- **@hapi/boom** 10.0 - HTTP errors tipados
 
 ### Seguridad
-- **Autenticación**: express-oauth2-jwt-bearer (Auth0)
-- **Validación**: **Zod 3.22** con inferencia automática de tipos TypeScript
-- **Hardening**: Helmet 8.0
-- **Error Handling**: @hapi/boom 10.0
+- **Helmet** 8.0 - Security headers
+- **express-rate-limit** 7.x - Rate limiting
+- **express-oauth2-jwt-bearer** - Auth0 integration
 
-### Desarrollo y Testing
-- **Testing**: Jest 29.7 + ts-jest
-- **TypeScript**: TypeScript 5.0+ con strict mode
-- **Linting**: ESLint 9.8
-- **Dev Server**: Nodemon 3.1 + ts-node
+### Testing y Desarrollo
+- **Jest** 29.7 + **ts-jest**
+- **Nodemon** 3.1 + **ts-node**
+- **ESLint** 9.8
 
 ### Monitoreo
-- **APM**: Sentry (Node + Profiling)
-- **Logging**: Sistema centralizado tipado con timestamps, contexto JSON y niveles (utils/logger.ts)
-- **Validation**: Utilidades de parsing seguro con tipos (parseIntSafe, validatePagination)
-
-### Documentación
-- **Spec**: OpenAPI 3.0 (YAML)
-- **UI**: Swagger UI Express 4.6
-- **Types**: Interfaces TypeScript completas en `types/index.ts`
-
----
-
-## 📦 Requisitos Previos
-
-- **Node.js**: v20 LTS o superior
-- **npm**: v9 o superior
-- **MariaDB/MySQL**: 10.x / 8.x
-- **Git**: Para clonar el repositorio
+- **Sentry** - APM y error tracking
 
 ---
 
 ## 🚀 Instalación
 
-### 1. Clonar el repositorio
+### Requisitos Previos
+
+- Node.js v20+
+- MariaDB 10.x o MySQL 8.x
+- npm v9+
+
+### 1. Clonar e Instalar
 
 ```bash
 git clone https://github.com/ismaeltorresh/neec-backend.git
 cd neec-backend
-```
-
-### 2. Instalar dependencias
-
-```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
-
-Copia el archivo de ejemplo y configura tus variables:
+### 2. Configurar Variables de Entorno
 
 ```bash
 cp .env.example .env
 ```
 
-Edita `.env` con tus credenciales (ver sección [Configuración](#-configuración))
-
-### 4. Configurar la base de datos
-
-Ejecuta el script SQL para crear el esquema:
+Edita `.env`:
 
 ```bash
-# Conecta a tu servidor MariaDB/MySQL y ejecuta:
+# Application
+NODE_ENV=development
+PORT=8008
+
+# Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=tu_password
+DB_NAME=neec_dev
+
+# OAuth 2.0 (Auth0)
+AUDIENCE=https://api.loha.mx
+ISSUER_BASE_URL=https://dev-xxx.us.auth0.com/
+
+# Security
+BODY_LIMIT=100kb
+DOCS_TOKEN=token_secreto
+
+# Sentry (opcional)
+SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+SENTRY_TRACES_SAMPLE_RATE=0.05
+```
+
+### 3. Crear Base de Datos
+
+```bash
+# Opción 1: Usar script SQL (legacy)
 mysql -u root -p < db/database.sql
+
+# Opción 2: Crear manualmente
+mysql -u root -p
+CREATE DATABASE neec_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### 4. Ejecutar Migraciones
+
+```bash
+# Ejecutar todas las migraciones pendientes
+npm run migration:run
+```
+
+### 5. Iniciar Servidor
+
+```bash
+# Desarrollo (hot-reload)
+npm run dev
+
+# Producción
+npm run build
+npm start
 ```
 
 ---
 
 ## ⚙️ Configuración
 
-### Variables de Entorno
+### Ambientes
 
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+Archivos de configuración en [`environments/`](environments/):
 
-```bash
-# === APPLICATION ===
-NODE_ENV=development           # development | production | test
-PORT=8008
+- **`environments.development.ts`** - Desarrollo local
+- **`environments.production.ts`** - Producción
+- **`environments.testing.ts`** - Tests
 
-# === DATABASE ===
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=tu_password_seguro
-DB_NAME=neec_dev
+Carga automática según `NODE_ENV`.
 
-# === OAUTH 2.0 (Auth0) ===
-AUDIENCE=https://api.loha.mx
-ISSUER_BASE_URL=https://dev-oww130dxq3575ipw.us.auth0.com/
+### TypeORM DataSource
 
-# === SECURITY ===
-BODY_LIMIT=100kb              # Límite de payload para prevenir DoS
-DOCS_TOKEN=token_secreto      # Token para acceder a /docs en producción
+Configurado en [`db/connection.ts`](db/connection.ts) y [`db/ormconfig.ts`](db/ormconfig.ts):
 
-# === SENTRY (Opcional) ===
-SENTRY_TRACES_SAMPLE_RATE=0.05    # 5% en producción
-SENTRY_PROFILES_SAMPLE_RATE=0.01  # 1% en producción
+```typescript
+// db/connection.ts
+export const AppDataSource = new DataSource({
+  type: 'mysql',
+  host: env.dbHost,
+  port: env.dbPort,
+  username: env.dbUser,
+  password: env.dbPassword,
+  database: env.dbName,
+  entities: ['dist/entities/**/*.js'],
+  migrations: ['dist/migrations/**/*.js'],
+  synchronize: false, // ⚠️ NUNCA true en producción
+  logging: env.execution === 'development',
+});
 ```
-
-### Configuración por Entorno
-
-El proyecto tiene 3 archivos de configuración en `environments/`:
-
-- `environments.development.js` - Desarrollo local
-- `environments.production.js` - Producción
-- `environments.test` - Testing
-
-Estos se cargan automáticamente según `NODE_ENV`.
 
 ---
 
-## 📜 Scripts Disponibles
+## 📜 Scripts
 
 ### Desarrollo
 
 ```bash
-# Iniciar servidor en modo desarrollo con hot-reload (TypeScript)
-npm run dev
-
-# Verificar tipos sin compilar
-npm run type-check
+npm run dev          # Servidor con hot-reload (TypeScript)
+npm run type-check   # Verificar tipos sin compilar
 ```
 
 ### Compilación
 
 ```bash
-# Compilar TypeScript a JavaScript
-npm run build
+npm run build        # Compilar TS → JS en dist/
 ```
 
 ### Producción
 
 ```bash
-# Compilar y ejecutar en producción
-npm run build
-npm start
+npm start            # Ejecutar código compilado
 ```
 
 ### Testing
 
 ```bash
-# Ejecutar todos los tests con Jest (soporta .ts y .js)
-npm test
+npm test             # Jest (soporta .ts y .js)
+npm run lint         # ESLint
+```
+
+### TypeORM (Migraciones)
+
+```bash
+# Generar migración desde cambios en entidades
+npm run migration:generate -- migrations/CreateUserTable
+
+# Crear migración vacía
+npm run migration:create -- migrations/AddIndexToUsers
+
+# Ejecutar migraciones
+npm run migration:run
+
+# Revertir última migración
+npm run migration:revert
+
+# Ver estado de migraciones
+npm run typeorm -- migration:show -d db/ormconfig.ts
 ```
 
 ### Seguridad
 
 ```bash
-# Auditoría de seguridad (verifica secrets hardcodeados, .gitignore, etc.)
-npm run security:audit
-```
-
-### Linting
-
-```bash
-# Ejecutar ESLint
-npm run lint
-```
-
-### Documentación
-
-```bash
-# Servir documentación OpenAPI en http://localhost:8080
-npm run docs
+npm run security:audit   # Auditoría de seguridad
 ```
 
 ---
@@ -295,122 +311,104 @@ npm run docs
 ```
 neec-backend/
 ├── db/
-│   ├── connection.ts          # TypeORM DataSource + pool config
-│   ├── ormconfig.ts           # Config para TypeORM CLI
-│   └── database.sql           # Schema SQL (referencia legacy)
-├── entities/                  # Entidades TypeORM (decoradores)
-│   ├── base.entity.ts         # Entidad base con campos comunes
-│   ├── example.entity.ts      # Entidad de ejemplo
-│   └── README.md              # Guía de entidades
-├── repositories/              # Capa de acceso a datos
-│   ├── base.repository.ts     # Repository base genérico
-│   ├── example.repository.ts  # Repository de ejemplo
-│   └── README.md              # Guía de repositorios
-├── migrations/                # Migraciones de BD (versionado)
-│   ├── README.md              # Guía de migraciones
-│   └── *.ts                   # Archivos de migración
-├── docs/
-│   ├── SECURITY.md            # Guía de seguridad
-│   ├── TYPEORM_MIGRATION.md   # Documentación migración TypeORM
-│   └── ...
-├── environments/
-│   ├── index.ts               # Loader de entornos
+│   ├── connection.ts           # TypeORM DataSource
+│   ├── ormconfig.ts            # Config para CLI
+│   └── database.sql            # Schema legacy (referencia)
+├── entities/                   # Entidades TypeORM
+│   ├── base.entity.ts          # Entidad base abstracta
+│   ├── example.entity.ts       # Ejemplo
+│   └── README.md
+├── repositories/               # Repository Pattern
+│   ├── base.repository.ts      # Repository genérico
+│   ├── example.repository.ts   # Ejemplo
+│   └── README.md
+├── migrations/                 # Migraciones versionadas
+│   ├── 1703851200000-CreateExampleTable.ts
+│   └── README.md
+├── schemas/                    # Schemas Zod
+│   ├── example.schema.ts       # Validación + tipos inferidos
+│   └── template.schema.ts
+├── interfaces/                 # Interfaces TypeScript (DTOs)
+│   ├── example.interface.ts
+│   └── README.md
+├── routes/                     # Controllers
+│   ├── index.ts                # Router principal
+│   ├── example.routes.ts       # CRUD completo
+│   └── template.routes.ts
+├── middlewares/
+│   ├── async.handler.ts        # asyncHandler, withTimeout, withRetry
+│   ├── error.handler.ts        # Error handler global
+│   ├── validator.handler.ts    # Validación Zod
+│   ├── rate-limit.handler.ts   # Rate limiting
+│   └── perf.handler.ts
+├── utils/
+│   ├── logger.ts               # Logging estructurado
+│   ├── validation.ts           # parseIntSafe, validatePagination
+│   ├── pagination.ts           # Paginación SQL
+│   └── response.ts             # Helpers HTTP
+├── environments/               # Configuración por ambiente
+│   ├── index.ts
 │   ├── environments.development.ts
 │   ├── environments.production.ts
 │   └── environments.testing.ts
-├── middlewares/
-│   ├── async.handler.ts       # Async/await error handling wrapper
-│   ├── error.handler.ts       # Error handling centralizado
-│   ├── perf.handler.ts        # Timeout middleware
-│   ├── rate-limit.handler.ts  # Rate limiting
-│   └── validator.handler.ts   # Validación con Zod
-├── routes/
-│   ├── index.ts               # Router principal (monta todos los endpoints)
-│   └── template.routes.ts     # Template para nuevos servicios
-├── schemas/
-│   └── template.schema.ts     # Validación Zod template
-├── test/
-│   ├── fakedata.json          # Datos mock para testing
-│   └── fakedata.js            # Generador de datos fake
-├── tools/
-│   └── serve-docs.js          # Servidor standalone para docs
-├── utils/
-│   ├── logger.js              # Sistema de logging centralizado (6 niveles)
-│   ├── nosqlMock.js           # Mock de operaciones NoSQL
-│   ├── pagination.js          # Utilidades de paginación SQL
-│   ├── response.js            # Helpers de respuestas HTTP
-│   └── validation.js          # Utilidades de validación segura (parseIntSafe, validatePagination)
-├── .editorconfig              # Configuración de editor
-├── .env.example               # Template de variables de entorno
-├── .eslintrc.json             # Configuración ESLint
-├── .gitignore
-├── index.js                   # 🚀 Entry point de la aplicación
-├── instrument.js              # Inicialización de Sentry
-├── package.json
+├── types/
+│   └── index.ts                # Tipos globales
+├── docs/                       # Documentación
+│   ├── TYPEORM_MIGRATION.md
+│   ├── ZOD_TYPEORM_SYNC.md
+│   ├── SECURITY.md
+│   └── ...
+├── .github/workflows/          # CI/CD
+│   ├── ci-cd.yml
+│   └── pr-checks.yml
+├── index.ts                    # Entry point
+├── instrument.ts               # Sentry init
+├── tsconfig.json
+├── jest.config.js
+├── .env.example
 └── README.md
 ```
 
 ---
 
-## 🌐 Endpoints API
-
-Todos los endpoints están montados bajo el prefijo `/api/v1`.
+## 🌐 Uso de la API
 
 ### Endpoints Disponibles
 
-| Recurso      | Path                  | Descripción              |
-|--------------|-----------------------|--------------------------|
-| **Root**     | `GET /`               | Welcome message          |
-| **Info**     | `GET /api`            | Información de la API    |
-| **Docs**     | `GET /docs`           | Swagger UI (OpenAPI)     |
-| **Template** | `/api/v1/template`    | Template de referencia   |
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/` | Welcome message |
+| `GET` | `/health` | Health check (DB status) |
+| `GET` | `/api` | API info |
+| `GET` | `/docs` | Swagger UI |
+| `GET` | `/api/v1/examples` | Listar ejemplos (paginado) |
+| `GET` | `/api/v1/examples/:id` | Obtener ejemplo por ID |
+| `GET` | `/api/v1/examples/email/:email` | Buscar por email |
+| `POST` | `/api/v1/examples` | Crear ejemplo |
+| `PATCH` | `/api/v1/examples/:id` | Actualizar ejemplo |
+| `DELETE` | `/api/v1/examples/:id` | Soft delete |
+| `DELETE` | `/api/v1/examples/:id/hard` | Hard delete |
 
-### Ejemplo: Template Endpoints
+### Ejemplos de Uso
 
-```
-GET    /api/v1/template         # Listar registros (paginado)
-GET    /api/v1/template/:id     # Obtener un registro
-POST   /api/v1/template         # Crear registro
-PATCH  /api/v1/template/:id     # Actualizar registro
-DELETE /api/v1/template/:id     # Eliminar registro
-GET    /api/v1/template/schema  # Ver schema de validación (dev only)
-```
-
-### Query Parameters (GET /api/v1/template)
+#### 1. Listar Ejemplos con Filtros
 
 ```bash
-# Paginación
-?page=1&pageSize=10
+GET /api/v1/examples?page=1&pageSize=10&isActive=true&sortBy=createdAt&sortOrder=DESC
 
-# Filtros
-?brand=Nike&categoryId=123e4567-e89b-12d3-a456-426614174000
-
-# Búsqueda
-?q=laptop
-
-# Ordenamiento
-?sortBy=price&sortDir=ASC
-
-# DataSource
-?dataSource=sql         # sql | nosql | both | fake
-?recordStatus=true      # Mostrar solo registros activos
-```
-
-### Ejemplo de Respuesta
-
-```json
+# Respuesta
 {
   "data": [
     {
-      "id": "123e4567-e89b-12d3-a456-426614174000",
-      "brand": "Nike",
-      "code": "NK-AIR-001",
-      "sumary": "Nike Air Max 2024",
-      "price": 129.99,
-      "stock": 50,
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "description": "Example user",
+      "isActive": true,
       "recordStatus": true,
-      "createdAt": "2024-01-15T10:30:00.000Z",
-      "updatedAt": "2024-01-20T14:45:00.000Z"
+      "dataSource": "sql",
+      "createdAt": "2025-01-15T10:30:00.000Z",
+      "updatedAt": "2025-01-15T10:30:00.000Z"
     }
   ],
   "meta": {
@@ -422,587 +420,340 @@ GET    /api/v1/template/schema  # Ver schema de validación (dev only)
 }
 ```
 
+#### 2. Crear Ejemplo
+
+```bash
+POST /api/v1/examples
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "description": "New user",
+  "isActive": true
+}
+
+# Respuesta (201 Created)
+{
+  "id": 2,
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "description": "New user",
+  "isActive": true,
+  "recordStatus": true,
+  "dataSource": "sql",
+  "createdAt": "2025-01-16T14:20:00.000Z",
+  "updatedAt": "2025-01-16T14:20:00.000Z"
+}
+```
+
+#### 3. Actualizar Ejemplo
+
+```bash
+PATCH /api/v1/examples/2
+Content-Type: application/json
+
+{
+  "description": "Updated description",
+  "isActive": false
+}
+
+# Respuesta (200 OK)
+{
+  "id": 2,
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "description": "Updated description",
+  "isActive": false,
+  "recordStatus": true,
+  "dataSource": "sql",
+  "createdAt": "2025-01-16T14:20:00.000Z",
+  "updatedAt": "2025-01-16T15:45:00.000Z"
+}
+```
+
+#### 4. Buscar por Email
+
+```bash
+GET /api/v1/examples/email/jane@example.com
+
+# Respuesta (200 OK)
+{
+  "id": 2,
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  ...
+}
+```
+
+#### 5. Eliminar (Soft Delete)
+
+```bash
+DELETE /api/v1/examples/2
+
+# Respuesta (204 No Content)
+```
+
 ---
 
-## 🔒 Seguridad
+## ✅ Sistema de Validación (Zod)
 
-El proyecto implementa múltiples capas de seguridad siguiendo las recomendaciones de **OWASP**, **CIS** y **NIST**:
+### Filosofía: Single Source of Truth
 
-### 1. Validación y Sanitización (OWASP Top 10)
+Los **schemas Zod** son la única fuente de verdad. Los tipos TypeScript se infieren automáticamente:
 
-- ✅ **Input Validation**: Todo input es validado con **Joi** antes de procesarse
-- ✅ **SQL Injection Prevention**: Uso de queries parametrizadas (TypeORM Repository pattern)
-- ✅ **NoSQL Injection Prevention**: Sanitización de operadores MongoDB (`$gt`, `$ne`, etc.)
-- ✅ **Schema Stripping**: Campos desconocidos son eliminados automáticamente
+```typescript
+// schemas/example.schema.ts
+import { z } from 'zod';
 
-### 2. Autenticación y Autorización
+// 1️⃣ Definir schema Zod
+export const createExampleSchema = z.object({
+  name: z.string().min(3).max(255).trim(),
+  email: z.string().email().max(255).toLowerCase().trim(),
+  description: z.string().max(5000).trim().optional().nullable(),
+  isActive: z.boolean().default(true),
+});
 
-- ✅ **OAuth 2.0**: Integración con Auth0 vía JWT Bearer tokens
-- ✅ **JWT Validation**: Validación de firma, audience e issuer
-- ✅ **Token Expiration**: Todos los tokens incluyen `exp` (expiration)
+// 2️⃣ Inferir tipos automáticamente
+export type CreateExampleInput = z.infer<typeof createExampleSchema>;
 
-### 3. Criptografía (NIST SP 800)
-
-- ✅ **Password Hashing**: Usar `bcrypt` (>=10 rounds) o `Argon2` (implementar en capa de servicio)
-- ✅ **Secrets Management**: Variables de entorno vía `.env`, NUNCA hardcodeadas
-- ✅ **Strong Algorithms**: JWT con HS256 mínimo, RS256 preferido
-- ✅ **Sentry DSN**: Movido a variable de entorno `SENTRY_DSN`
-- ✅ **Security Audit**: Script automatizado (`npm run security:audit`)
-
-#### Gestión de Secrets
-
-**CRÍTICO**: Este proyecto maneja información sensible mediante variables de entorno:
-
-```bash
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus valores reales
+// 3️⃣ Schema para actualizaciones (todos los campos opcionales)
+export const updateExampleSchema = createExampleSchema.partial();
+export type UpdateExampleInput = z.infer<typeof updateExampleSchema>;
 ```
 
-**Variables sensibles requeridas:**
-- `DB_PASSWORD`: Contraseña de base de datos
-- `SENTRY_DSN`: DSN de Sentry (si `SENTRY=true`)
-- `DOCS_TOKEN`: Token de acceso a documentación (producción)
+### Uso en Rutas
 
-**Ver guía completa**: [`docs/SECURITY.md`](docs/SECURITY.md)
+```typescript
+// routes/example.routes.ts
+import { validatorHandler } from '../middlewares/validator.handler.js';
+import { createExampleSchema, type CreateExampleInput } from '../schemas/example.schema.js';
 
-**Auditoría de seguridad:**
-```bash
-npm run security:audit
+router.post(
+  '/',
+  validatorHandler(createExampleSchema, 'body'), // ✅ Validación Zod
+  asyncHandler(async (req: Request, res: Response) => {
+    const data = req.body as CreateExampleInput; // ✅ Tipo inferido
+    const example = await exampleRepo.create(data);
+    res.status(201).json(example);
+  })
+);
 ```
 
-### 4. Hardening de Express
+### Ventajas de Zod
 
-- ✅ **Helmet**: Configuración de headers de seguridad HTTP
-- ✅ **CORS**: Whitelist de origins permitidos
-- ✅ **X-Powered-By**: Deshabilitado para evitar información disclosure
-- ✅ **Body Limit**: Límite de 100KB en payloads para prevenir DoS
-- ✅ **Compression**: Respuestas comprimidas con gzip
+- ✅ **Type Inference** - `z.infer<typeof schema>` genera tipos automáticamente
+- ✅ **Runtime Validation** - Valida datos en ejecución
+- ✅ **Bundle Size** - ~8KB vs ~146KB (Joi)
+- ✅ **TypeScript First** - Diseñado para TypeScript
+- ✅ **Composable** - `.merge()`, `.extend()`, `.partial()`
 
-### 5. Manejo Seguro de Errores
-
-- ✅ **Error Sanitization**: En producción, NO se expone stack traces
-- ✅ **Generic 5xx Messages**: Errores del servidor retornan mensajes genéricos
-- ✅ **Structured Logging**: Logs estructurados sin datos sensibles
-- ✅ **Sentry Integration**: Tracking de errores 5xx en producción
-
-### 6. Headers HTTP Seguros
-
-Helmet configura automáticamente:
-- `Content-Security-Policy`
-- `X-Frame-Options: DENY`
-- `X-Content-Type-Options: nosniff`
-- `Strict-Transport-Security`
-- `X-XSS-Protection`
+**Documentación completa**: [`docs/ZOD_MIGRATION.md`](docs/ZOD_MIGRATION.md)
 
 ---
 
-## 🚀 CI/CD Pipeline
+## 🗄️ TypeORM y Migraciones
 
-El proyecto incluye pipelines de integración continua y despliegue continuo con **GitHub Actions**.
+### Entidades
 
-### Workflows Configurados
+Definidas con decoradores en [`entities/`](entities/):
 
-#### 1. **CI/CD Pipeline** (`.github/workflows/ci-cd.yml`)
+```typescript
+// entities/example.entity.ts
+import { Entity, Column } from 'typeorm';
+import { BaseEntity } from './base.entity.js';
 
-**Triggers**:
-- Push a `main` o `develop`
-- Pull requests a `main` o `develop`
+@Entity('examples')
+export class Example extends BaseEntity {
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
 
-**Jobs**:
+  @Column({ type: 'varchar', length: 255, unique: true })
+  email!: string;
 
-**Build and Test** (Matrix: Node 20.x, 22.x):
-- ✓ Checkout del código
-- ✓ Instalación de dependencias (`npm ci`)
-- ✓ Type check (`npm run type-check`)
-- ✓ **Build de TypeScript (`npm run build`)**
-- ✓ Ejecución de tests (`npm test`)
-- ✓ Upload de artefactos compilados
+  @Column({ type: 'text', nullable: true })
+  description!: string | null;
 
-**Security Audit**:
-- ✓ Auditoría de seguridad (`npm audit`)
-- ✓ Verificación de vulnerabilidades
+  @Column({ type: 'boolean', default: true })
+  isActive!: boolean;
+}
+```
 
-**Deploy Staging** (rama `develop`):
-- ✓ Build para staging
-- ✓ Despliegue automático a entorno de staging
+### Repositorios
 
-**Deploy Production** (rama `main`):
-- ✓ Build para producción
-- ✓ Tests de producción
-- ✓ Despliegue a producción (requiere aprobación manual)
+Patrón Repository en [`repositories/`](repositories/):
 
-#### 2. **Pull Request Checks** (`.github/workflows/pr-checks.yml`)
+```typescript
+// repositories/example.repository.ts
+import { BaseRepository } from './base.repository.js';
+import { Example } from '../entities/example.entity.js';
 
-**Triggers**:
-- Apertura, sincronización o reapertura de PRs
+export class ExampleRepository extends BaseRepository<Example> {
+  constructor() {
+    super(Example);
+  }
 
-**Validaciones**:
-- ✓ Type check de TypeScript
-- ✓ Build del proyecto
-- ✓ Tests con cobertura
-- ✓ Comentario automático en el PR con resultados
+  async findByEmail(email: string): Promise<Example | null> {
+    return this.repository.findOne({ where: { email } });
+  }
 
-### Configurar Secrets
+  async findActiveExamples(): Promise<Example[]> {
+    return this.repository.find({ where: { isActive: true } });
+  }
+}
+```
 
-Para deploy en producción, configura los siguientes secrets en GitHub:
+### Migraciones
 
 ```bash
-# Settings → Secrets and variables → Actions → New repository secret
+# 1. Modificar entidad
+# Editar entities/example.entity.ts
 
-# Para deploy con SSH
-SSH_PRIVATE_KEY=<tu-clave-privada>
-SSH_HOST=<tu-servidor>
-SSH_USER=<tu-usuario>
+# 2. Generar migración automáticamente
+npm run migration:generate -- migrations/AddPhoneToExample
 
-# Para deploy en AWS
-AWS_ACCESS_KEY_ID=<tu-access-key>
-AWS_SECRET_ACCESS_KEY=<tu-secret-key>
+# 3. Revisar archivo generado en migrations/
+# migrations/1234567890000-AddPhoneToExample.ts
 
-# Para deploy en Heroku
-HEROKU_API_KEY=<tu-api-key>
-HEROKU_APP_NAME=<nombre-de-tu-app>
+# 4. Ejecutar migración
+npm run migration:run
+
+# 5. Si algo sale mal, revertir
+npm run migration:revert
 ```
 
-### Personalizar el Pipeline
+### ⚠️ Importante: Sincronización Zod ↔ TypeORM
 
-Edita `.github/workflows/ci-cd.yml` para agregar tu estrategia de deploy:
+Mantener sincronizados:
 
-```yaml
-- name: Deploy to production
-  run: |
-    # Ejemplo: Deploy a servidor con PM2
-    ssh user@server "cd /app && git pull && npm ci && npm run build && pm2 reload ecosystem.config.js"
-    
-    # Ejemplo: Deploy a AWS
-    aws s3 sync dist/ s3://your-bucket --delete
-    
-    # Ejemplo: Deploy a Heroku
-    git push heroku main
-```
+1. **Schema Zod** (validación + tipos) → [`schemas/example.schema.ts`](schemas/example.schema.ts)
+2. **Interfaces** (DTOs) → [`interfaces/example.interface.ts`](interfaces/example.interface.ts)
+3. **Entidad TypeORM** (persistencia) → [`entities/example.entity.ts`](entities/example.entity.ts)
+
+**Documentación completa**: [`docs/ZOD_TYPEORM_SYNC.md`](docs/ZOD_TYPEORM_SYNC.md), [`docs/TYPEORM_MIGRATION.md`](docs/TYPEORM_MIGRATION.md)
 
 ---
 
 ## 🧪 Testing
-
-### Ejecutar Tests
 
 ```bash
 # Todos los tests
 npm test
 
 # Tests específicos
-npm test async.handler.test.js
+npm test async.handler.test
 ```
-
-### Tipos de Tests
-
-1. **Unit Tests**: Test de funciones y utilidades aisladas (middlewares, utils)
-2. **E2E Tests**: Script bash para testing de endpoints reales
-3. **Integration Tests**: Se pueden agregar con supertest si se necesitan
 
 ### Ejemplo de Test
 
 ```typescript
-// middlewares/async.handler.test.ts
+// test/example.test.ts
 import { describe, it, expect } from '@jest/globals';
-import { asyncHandler } from './async.handler.js';
-import templateRoutes from './template.routes.js';
+import { ExampleRepository } from '../repositories/example.repository.js';
 
-describe('GET /api/v1/template', () => {
-  it('should return paginated records', async () => {
-    const response = await request(app)
-      .get('/api/v1/template?dataSource=fake&recordStatus=true')
-      .expect(200);
-    
-    expect(response.body.data).toBeInstanceOf(Array);
-    expect(response.body.meta).toHaveProperty('total');
+describe('ExampleRepository', () => {
+  let repo: ExampleRepository;
+
+  beforeEach(() => {
+    repo = new ExampleRepository();
+  });
+
+  it('debe crear un ejemplo', async () => {
+    const data = {
+      name: 'Test User',
+      email: 'test@example.com',
+      isActive: true,
+    };
+
+    const example = await repo.create(data);
+
+    expect(example.id).toBeDefined();
+    expect(example.name).toBe(data.name);
+    expect(example.email).toBe(data.email);
   });
 });
 ```
 
 ---
 
-## 🔧 Generador de Servicios
+## 🔒 Seguridad
 
-El proyecto incluye un **CLI interactivo** para generar automáticamente nuevos servicios CRUD completos.
+### Implementado
 
-### Uso
+- ✅ **Input Validation** - Zod con sanitización
+- ✅ **SQL Injection Prevention** - TypeORM parametrizado
+- ✅ **Rate Limiting** - 100 req/15min (prod)
+- ✅ **Helmet** - Security headers HTTP
+- ✅ **CORS** - Whitelist de origins
+- ✅ **JWT Validation** - OAuth 2.0 con Auth0
+- ✅ **Error Sanitization** - No stack traces en producción
+- ✅ **Secrets Management** - Variables `.env`
 
-```bash
-node createservice.js
-```
-
-El script te pedirá el nombre del servicio (ej: `orders`) y generará:
-
-1. ✅ `schemas/orders.schema.js` - Schema de validación Joi
-2. ✅ `routes/orders.routes.js` - Rutas CRUD completas
-3. ✅ `routes/orders.routes.test.js` - Tests de integración
-4. ✅ Actualiza `routes/index.js` - Monta el nuevo endpoint automáticamente
-
-### Ejemplo
+### Auditoría de Seguridad
 
 ```bash
-$ node createservice.js
-Ingrese el nombre del servicio: orders
-Servicio orders creado exitosamente.
+npm run security:audit
 ```
 
-Ahora tendrás disponible:
-- `GET /api/v1/orders`
-- `GET /api/v1/orders/:id`
-- `POST /api/v1/orders`
-- `PATCH /api/v1/orders/:id`
-- `DELETE /api/v1/orders/:id`
+**Documentación completa**: [`docs/SECURITY.md`](docs/SECURITY.md)
 
 ---
 
-## 📚 Documentación API
+## 🚀 CI/CD
 
-### Swagger UI
+### GitHub Actions
 
-La documentación interactiva está disponible en:
+Configurados en [`.github/workflows/`](.github/workflows/):
 
-```
-http://localhost:8008/docs
-```
+**`ci-cd.yml`** (Main Pipeline):
+- ✅ Build TypeScript (`npm run build`)
+- ✅ Type check (`npm run type-check`)
+- ✅ Tests (`npm test`)
+- ✅ Security audit
+- ✅ Deploy a staging (rama `develop`)
+- ✅ Deploy a producción (rama `main`)
 
-**Protección en Producción:**
-- En `development`: Acceso libre
-- En `production`: Requiere header `X-DOCS-TOKEN` o query param `?docsToken=<token>`
-
-**Nota:** El proyecto incluye soporte para Swagger UI si está instalado. Puedes generar tu propia especificación OpenAPI 3.0+ basada en los schemas Joi del proyecto.
-
----
-
-## 📋 Logging y Utilidades
-
-### Sistema de Logging Centralizado
-
-El proyecto incluye un sistema de logging estructurado en `utils/logger.js` que reemplaza todas las llamadas a `console.log/warn/error` por logging con contexto y niveles.
-
-**Características:**
-- ✅ 6 niveles de logging (info, warn, error, debug, db, perf)
-- ✅ Timestamps automáticos en formato ISO 8601
-- ✅ Contexto JSON estructurado
-- ✅ Filtrado por ambiente (debug solo en development)
-- ✅ Preparado para integración con APM (Datadog, Loggly)
-
-**Uso:**
-
-```javascript
-import logger from './utils/logger.js';
-
-// Información general
-logger.info('Server started', { port: 8008, env: 'development' });
-
-// Advertencias
-logger.warn('API rate limit approaching', { endpoint: '/api/v1/template', usage: '85%' });
-
-// Errores críticos
-logger.error('Database connection failed', {
-  message: error.message,
-  stack: error.stack,
-  host: 'localhost'
-});
-
-// Debug (solo development)
-logger.debug('Request payload', { body: req.body });
-
-// Operaciones de base de datos
-logger.db('Query executed successfully', { table: 'template', rows: 150 });
-
-// Performance y timeouts
-logger.perf('Request exceeded timeout', { path: '/api/v1/template', duration: '5200ms' });
-```
-
-**Formato de salida:**
-```
-[2025-12-07T19:56:12.190Z] [ERROR] Database connection failed | {"message":"Connection timeout","host":"localhost"}
-```
-
-### Utilidades de Validación
-
-El módulo `utils/validation.js` proporciona funciones de validación y parsing seguro:
-
-#### 1. parseIntSafe(value, defaultValue, min, max)
-
-Parsea números enteros de forma segura con validación de rangos:
-
-```javascript
-import { parseIntSafe } from './utils/validation.js';
-
-// Parsing básico
-const page = parseIntSafe(req.query.page, 1);  // default: 1
-
-// Con validación de rangos
-const pageSize = parseIntSafe(req.query.pageSize, 10, 1, 100);
-// Si pageSize < 1 → retorna 1
-// Si pageSize > 100 → retorna 100
-// Si pageSize es NaN → retorna 10
-```
-
-#### 2. validatePagination(inputData)
-
-Wrapper para validar parámetros de paginación:
-
-```javascript
-import { validatePagination } from './utils/validation.js';
-
-const { page, pageSize } = validatePagination(req.query);
-// page: 1-10000 (default: 1)
-// pageSize: 1-100 (default: 10)
-```
-
-#### 3. sanitizeString(str, maxLength)
-
-Limpia y trunca strings de forma segura:
-
-```javascript
-import { sanitizeString } from './utils/validation.js';
-
-const cleanName = sanitizeString(userInput, 255);
-// Elimina espacios, limita longitud a 255 caracteres
-```
-
-#### 4. validateEnum(value, allowedValues, defaultValue)
-
-Valida que un valor esté en una lista permitida:
-
-```javascript
-import { validateEnum } from './utils/validation.js';
-
-const dataSource = validateEnum(
-  req.query.dataSource,
-  ['sql', 'nosql', 'both', 'fake'],
-  'sql'
-);
-```
-
-### Async Handler Middleware
-
-El middleware `middlewares/async.handler.js` proporciona 3 utilidades para manejo robusto de operaciones asíncronas:
-
-#### 1. asyncHandler(fn)
-
-Wrapper que elimina la necesidad de try-catch en rutas:
-
-```javascript
-import { asyncHandler } from './middlewares/async.handler.js';
-
-router.get('/', asyncHandler(async (req, res) => {
-  const data = await someAsyncOperation();
-  res.json(data);
-  // Los errores son capturados automáticamente
-}));
-```
-
-#### 2. withTimeout(promise, timeout)
-
-Añade timeout a operaciones async:
-
-```javascript
-import { withTimeout } from './middlewares/async.handler.js';
-
-const result = await withTimeout(
-  slowDatabaseQuery(),
-  5000  // timeout en 5 segundos
-);
-```
-
-#### 3. withRetry(fn, options)
-
-Reintentos automáticos con backoff exponencial:
-
-```javascript
-import { withRetry } from './middlewares/async.handler.js';
-
-const data = await withRetry(
-  async () => await externalAPICall(),
-  { 
-    maxRetries: 3,
-    initialDelay: 100,
-    backoffMultiplier: 2
-  }
-);
-```
-
-**Tests:** 12/12 tests passing en `middlewares/async.handler.test.js`
+**`pr-checks.yml`** (Pull Requests):
+- ✅ Type check
+- ✅ Build
+- ✅ Tests
+- ✅ Comentario automático con resultados
 
 ---
 
-## 📊 Monitoreo y Observabilidad
+## 📚 Documentación Adicional
 
-### Sentry Integration
-
-El proyecto está integrado con **Sentry** para:
-- ✅ Error tracking en tiempo real
-- ✅ Performance monitoring (APM)
-- ✅ Profiling de Node.js
-- ✅ Contexto enriquecido (request, user, tags)
-
-**Configuración:**
-
-```javascript
-// instrument.js
-Sentry.init({
-  dsn: "tu_dsn_aqui",
-  tracesSampleRate: 0.05,     // 5% en producción
-  profilesSampleRate: 0.01,   // 1% en producción
-});
-```
-
-### Logging Estructurado
-
-Todos los logs utilizan el sistema centralizado `utils/logger.js` con contexto estructurado:
-
-```javascript
-// Ejemplo de log de error con contexto
-logger.error('Database connection failed', {
-  timestamp: '2024-12-01T10:30:00.000Z',
-  method: 'GET',
-  path: '/api/v1/template',
-  ip: '192.168.1.100',
-  userAgent: 'Mozilla/5.0...',
-  statusCode: 500
-});
-```
-
-**Ver más:** [Sección Logging y Utilidades](#-logging-y-utilidades)
-
-### Health Check Endpoints
-
-```bash
-# Welcome endpoint (verifica que el servidor responde)
-GET /
-
-# API info
-GET /api
-```
+| Documento | Descripción |
+|-----------|-------------|
+| [`MIGRATION_SUMMARY.md`](MIGRATION_SUMMARY.md) | Resumen migración a TypeORM |
+| [`ZOD_TYPEORM_SYNC_SUMMARY.md`](ZOD_TYPEORM_SYNC_SUMMARY.md) | Sincronización Zod ↔ TypeORM |
+| [`docs/TYPEORM_MIGRATION.md`](docs/TYPEORM_MIGRATION.md) | Guía completa TypeORM |
+| [`docs/ZOD_MIGRATION.md`](docs/ZOD_MIGRATION.md) | Migración Joi → Zod |
+| [`docs/ZOD_TYPEORM_SYNC.md`](docs/ZOD_TYPEORM_SYNC.md) | Patrón de sincronización |
+| [`docs/SECURITY.md`](docs/SECURITY.md) | Guía de seguridad |
+| [`docs/MEJORAS_IMPLEMENTADAS.md`](docs/MEJORAS_IMPLEMENTADAS.md) | Historial de mejoras |
+| [`entities/README.md`](entities/README.md) | Guía de entidades |
+| [`repositories/README.md`](repositories/README.md) | Guía de repositorios |
+| [`migrations/README.md`](migrations/README.md) | Guía de migraciones |
+| [`interfaces/README.md`](interfaces/README.md) | Guía de interfaces |
 
 ---
 
 ## 🤝 Contribución
 
-### Workflow
-
-1. Fork el repositorio
-2. Crea una rama feature: `git checkout -b feature/nueva-funcionalidad`
-3. Commit tus cambios: `git commit -m 'Add: nueva funcionalidad'`
-4. Push a la rama: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
-
-### Convenciones de Código
-
-- **Indentación**: 2 espacios
-- **Quotes**: Single quotes `'`
-- **Semicolons**: Obligatorios `;`
-- **Variables**: `const` por defecto, `let` solo si reasignación
-- **Funciones**: Arrow functions para callbacks
-- **Naming**:
-  - Variables/Funciones: `camelCase`
-  - Clases: `PascalCase`
-  - Constantes globales: `UPPER_SNAKE_CASE`
-  - Archivos: `kebab-case.js`
+1. Fork del repositorio
+2. Crear rama: `git checkout -b feature/nueva-funcionalidad`
+3. Commit: `git commit -m 'Add: nueva funcionalidad'`
+4. Push: `git push origin feature/nueva-funcionalidad`
+5. Abrir Pull Request
 
 ### Pre-commit Checklist
 
-- [ ] Tests pasan: `npm test`
-- [ ] Linter pasa: `npm run lint`
-- [ ] Documentación actualizada si aplica
-- [ ] Variables sensibles en `.env` (no hardcodeadas)
-
----
-
-## 📝 Licencia
-
-ISC © [@ismaeltorresh](https://github.com/ismaeltorresh)
-
----
-
-## 🚀 Mejoras Recientes (Diciembre 2025)
-
-### ✅ Refactorización Completada
-
-El proyecto ha sido refactorizado siguiendo las mejores prácticas de Node.js y los estándares de la industria:
-
-#### 1️⃣ **Migración Completa a TypeScript** (21 archivos)
-- ✅ Migración completa de JavaScript a TypeScript con strict mode
-- ✅ Tipos e interfaces en `types/index.ts` para toda la aplicación
-- ✅ Configuración de compilación con tsconfig.json
-- ✅ Integración de ts-jest para tests con TypeScript
-- ✅ Tests migrados a TypeScript: `async.handler.test.ts`
-- ✅ 0 errores de compilación, 12/12 tests pasando
-- ✅ Archivos JavaScript antiguos eliminados (limpieza completa)
-
-#### 2️⃣ **Migración de Joi a Zod** (29 de diciembre de 2025)
-- ✅ Sistema de validación migrado de Joi a **Zod**
-- ✅ Inferencia automática de tipos desde schemas (`z.infer<typeof schema>`)
-- ✅ Eliminación de interfaces duplicadas (types se infieren de schemas)
-- ✅ Middleware validator actualizado con `safeParse()` y mejor manejo de errores
-- ✅ Bundle más ligero (~8KB vs ~146KB minificado)
-- ✅ Documentación completa en `docs/ZOD_MIGRATION.md`
-
-#### 3️⃣ **ES Modules Migration** (29 archivos)
-- ✅ Migración completa de CommonJS (`require`) a ES Modules (`import/export`)
-- ✅ Actualización de `package.json` con `"type": "module"`
-- ✅ Configuración de Jest para ES Modules
-- ✅ 100% de compatibilidad con Node.js 20+
-
-#### 4️⃣ **Sistema de Logging Centralizado** (7 archivos)
-- ✅ Nuevo módulo `utils/logger.ts` con 6 niveles de logging y tipos
-- ✅ Timestamps automáticos en formato ISO 8601
-- ✅ Contexto JSON estructurado para mejor debugging
-- ✅ Filtrado por ambiente (debug solo en development)
-- ✅ Reemplazo de ~15 llamadas a `console.log/warn/error`
-
-#### 5️⃣ **Validación Segura** (6 rutas refactorizadas)
-- ✅ Nuevo módulo `utils/validation.ts` con tipos
-- ✅ `parseIntSafe()`: Parsing seguro con validación de rangos
-- ✅ `validatePagination()`: Wrapper para paginación consistente
-- ✅ 34 ocurrencias de `parseInt()` eliminadas
-- ✅ Prevención de NaN y valores fuera de rango
-
-#### 6️⃣ **Async/Await Error Handling** (Nuevo middleware)
-- ✅ `asyncHandler()`: Elimina try-catch en rutas con tipos completos
-- ✅ `withTimeout()`: Timeouts automáticos para operaciones async
-- ✅ `withRetry()`: Reintentos con backoff exponencial
-- ✅ 12/12 tests passing en `async.handler.test.js`
-
-#### 7️⃣ **Hardening de Seguridad**
-- ✅ Variables sensibles movidas a `.env` (Sentry DSN, DB credentials)
-- ✅ Script de auditoría de seguridad (`npm run security:audit`)
-- ✅ Documentación de seguridad en `docs/SECURITY.md`
-- ✅ Validación de variables de entorno en startup
-
-#### 8️⃣ **Calidad de Código**
-- ✅ Eliminación de variables globales mutables
-- ✅ Manejo de errores con contexto estructurado
-- ✅ Validación de ambiente en startup (fail-fast)
-
-#### 9️⃣ **Limpieza del Proyecto** (Diciembre 2025)
-- ✅ Eliminación de dependencias no utilizadas (Joi removido después de migración a Zod)
-- ✅ Eliminación de servicios de ejemplo (products, people, address, blogs, users)
-- ✅ Eliminación de archivos obsoletos y documentación redundante
-- ✅ 0 vulnerabilidades después de npm audit fix
-- ✅ Proyecto optimizado con solo servicio template como base
-
-#### 🔟 **CI/CD Pipeline con GitHub Actions** (29 de diciembre de 2025)
-- ✅ Pipeline completo de CI/CD configurado
-- ✅ **Build automático de TypeScript (`npm run build`)** antes del deploy
-- ✅ Type checking, tests y security audit en cada push/PR
-- ✅ Matrix testing con Node.js 20.x y 22.x
-- ✅ Deploy automático a staging (rama develop) y producción (rama main)
-- ✅ Pull Request checks con comentarios automáticos
-- ✅ Upload de artefactos compilados para deploy
-
-### 📚 Documentación
-
-Documentación disponible:
-- `docs/SECURITY.md` - Guía de seguridad y gestión de secrets
-- `docs/ZOD_MIGRATION.md` - Migración de Joi a Zod (29 de diciembre de 2025)
-- `docs/TYPESCRIPT_MIGRATION.md` - Migración a TypeScript
-- `docs/MEJORAS_IMPLEMENTADAS.md` - Registro de mejoras implementadas
+- [ ] `npm run type-check` ✅
+- [ ] `npm run build` ✅
+- [ ] `npm test` ✅
+- [ ] `npm run lint` ✅
+- [ ] Documentación actualizada
 
 ---
 
@@ -1014,24 +765,10 @@ Documentación disponible:
 
 ---
 
-## 🙏 Agradecimientos
+## 📝 Licencia
 
-- Express.js community
-- Sequelize team
-- Auth0 documentation
-- OWASP Security Guidelines
-- Node.js best practices community
+ISC © [@ismaeltorresh](https://github.com/ismaeltorresh)
 
 ---
 
-## 📞 Soporte
-
-Si encuentras algún bug o tienes una sugerencia:
-
-1. Abre un [Issue](https://github.com/ismaeltorresh/neec-backend/issues)
-2. Describe el problema/sugerencia con detalle
-3. Incluye logs relevantes y pasos para reproducir
-
----
-
-**⭐ Si este proyecto te fue útil, considera darle una estrella en GitHub**
+**⭐ Si te resultó útil, considera darle una estrella en GitHub**
