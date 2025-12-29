@@ -22,6 +22,7 @@ const env: Environment = {
   sentry: false,
   algorithms: ['RS256'],
   docsToken: process.env.DOCS_TOKEN,
+  skipDatabase: process.env.SKIP_DATABASE !== 'false',
   db: {
     maria: {
       host: process.env.DB_HOST || 'localhost',
@@ -34,8 +35,8 @@ const env: Environment = {
   }
 };
 
-// Validación obligatoria de credenciales
-if (!env.db.maria.password) {
+// Validación obligatoria de credenciales (solo si no se omite la base de datos)
+if (!env.skipDatabase && !env.db.maria.password) {
   throw new Error('DB_PASSWORD environment variable is required');
 }
 
