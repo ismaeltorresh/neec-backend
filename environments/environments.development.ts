@@ -29,7 +29,6 @@ const env: Environment = {
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME || 'neec_dev',
-      dialect: 'mariadb',
       logging: false,
     },
   }

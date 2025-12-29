@@ -5,7 +5,7 @@
  */
 
 import type { PaginationResult, SqlPaginateOptions } from '../types/index.js';
-import { sequelize } from '../db/connection.js';
+import { AppDataSource } from '../db/connection.js';
 import boom from '@hapi/boom';
 
 /**
@@ -138,16 +138,11 @@ async function sqlPaginate<T = unknown>(options: SqlPaginateOptions): Promise<Pa
   const countQuery = `SELECT COUNT(*) as total FROM ${table} WHERE ${finalWhere}`;
   const dataQuery = `SELECT ${columns} FROM ${table} WHERE ${finalWhere} ORDER BY ${orderClause} LIMIT :limit OFFSET :offset`;
 
-  // Use sequelize instance to run the queries
-  const [[countResult]] = await sequelize.query(countQuery, { 
-    replacements: merged
-  }) as [[{ total: number }], unknown];
-  
-  const [rows] = await sequelize.query(dataQuery, { 
-    replacements: merged
-  }) as [T[], unknown];
+  // Use TypeORM DataSource to run raw queries
+  const countResult = await AppDataSource.query(countQuery, Object.values(merged)) as [{ total: number }];
+  const rows = await AppDataSource.query(dataQuery, Object.values(merged)) as T[];
 
-  const totalNum = parseInt(String(countResult.total), 10) || 0;
+  const totalNum = parseInt(String(countResult[0]?.total || 0), 10);
   const totalPages = Math.max(1, Math.ceil(totalNum / size));
 
   return {

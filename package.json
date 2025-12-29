@@ -12,7 +12,14 @@
     "lint": "eslint",
     "docs": "node tools/serve-docs.js",
     "security:audit": "bash scripts/security-audit.sh",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "typeorm": "typeorm-ts-node-esm",
+    "migration:generate": "npm run typeorm -- migration:generate -d db/ormconfig.ts",
+    "migration:create": "npm run typeorm -- migration:create",
+    "migration:run": "npm run typeorm -- migration:run -d db/ormconfig.ts",
+    "migration:revert": "npm run typeorm -- migration:revert -d db/ormconfig.ts",
+    "schema:sync": "npm run typeorm -- schema:sync -d db/ormconfig.ts",
+    "schema:drop": "npm run typeorm -- schema:drop -d db/ormconfig.ts"
   },
   "repository": {
     "type": "git",
@@ -46,9 +53,10 @@
     "express-oauth2-jwt-bearer": "^1.6.0",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.0.0",
-    "mariadb": "^3.4.5",
-    "sequelize": "^6.37.7",
+    "mysql2": "^3.16.0",
+    "reflect-metadata": "^0.2.2",
     "swagger-ui-express": "^4.6.3",
+    "typeorm": "^0.3.28",
     "yaml": "^2.3.4",
     "zod": "^4.2.1"
   }

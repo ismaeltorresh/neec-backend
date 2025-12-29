@@ -90,7 +90,7 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 ┌─────────────────────────────────────────┐
 │      Repository/DAO Layer               │
 │  • Abstracción de la capa de datos      │
-│  • Queries SQL (Sequelize)              │
+│  • TypeORM Repositories + Entities      │
 │  • Operaciones CRUD                     │
 └─────────────────────────────────────────┘
                   ▼
@@ -117,7 +117,8 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 - **Lenguaje**: TypeScript 5.0+ (compilado a JavaScript ES2022 con ESM)
 
 ### Base de Datos
-- **ORM**: Sequelize 6.37
+- **ORM**: TypeORM (TypeScript-first ORM con decoradores)
+- **Driver**: mysql2 (compatible con MariaDB)
 - **DBMS**: MariaDB / MySQL
 
 ### Seguridad
@@ -293,29 +294,41 @@ npm run docs
 
 ```
 neec-backend/
-├── config/
-│   └── database.js            # Configuración de conexión DB (deprecated)
 ├── db/
-│   ├── connection.js          # Instancia Sequelize + pool config
-│   ├── database.sql           # Schema SQL para MariaDB
-│   └── sqlSchema.js           # Definición de modelos (opcional)
+│   ├── connection.ts          # TypeORM DataSource + pool config
+│   ├── ormconfig.ts           # Config para TypeORM CLI
+│   └── database.sql           # Schema SQL (referencia legacy)
+├── entities/                  # Entidades TypeORM (decoradores)
+│   ├── base.entity.ts         # Entidad base con campos comunes
+│   ├── example.entity.ts      # Entidad de ejemplo
+│   └── README.md              # Guía de entidades
+├── repositories/              # Capa de acceso a datos
+│   ├── base.repository.ts     # Repository base genérico
+│   ├── example.repository.ts  # Repository de ejemplo
+│   └── README.md              # Guía de repositorios
+├── migrations/                # Migraciones de BD (versionado)
+│   ├── README.md              # Guía de migraciones
+│   └── *.ts                   # Archivos de migración
 ├── docs/
-│   └── SECURITY.md            # Guía de seguridad
+│   ├── SECURITY.md            # Guía de seguridad
+│   ├── TYPEORM_MIGRATION.md   # Documentación migración TypeORM
+│   └── ...
 ├── environments/
-│   ├── index.js               # Loader de entornos
-│   ├── environments.development.js
-│   ├── environments.production.js
-│   └── environments.test
+│   ├── index.ts               # Loader de entornos
+│   ├── environments.development.ts
+│   ├── environments.production.ts
+│   └── environments.testing.ts
 ├── middlewares/
-│   ├── async.handler.js       # Async/await error handling wrapper
-│   ├── error.handler.js       # Error handling centralizado
-│   ├── perf.handler.js        # Timeout middleware
-│   └── validator.handler.js   # Validación con Joi
+│   ├── async.handler.ts       # Async/await error handling wrapper
+│   ├── error.handler.ts       # Error handling centralizado
+│   ├── perf.handler.ts        # Timeout middleware
+│   ├── rate-limit.handler.ts  # Rate limiting
+│   └── validator.handler.ts   # Validación con Zod
 ├── routes/
-│   ├── index.js               # Router principal (monta todos los endpoints)
-│   └── template.routes.js     # Template para nuevos servicios
+│   ├── index.ts               # Router principal (monta todos los endpoints)
+│   └── template.routes.ts     # Template para nuevos servicios
 ├── schemas/
-│   └── template.schema.js     # Validación Joi template
+│   └── template.schema.ts     # Validación Zod template
 ├── test/
 │   ├── fakedata.json          # Datos mock para testing
 │   └── fakedata.js            # Generador de datos fake
@@ -418,7 +431,7 @@ El proyecto implementa múltiples capas de seguridad siguiendo las recomendacion
 ### 1. Validación y Sanitización (OWASP Top 10)
 
 - ✅ **Input Validation**: Todo input es validado con **Joi** antes de procesarse
-- ✅ **SQL Injection Prevention**: Uso de queries parametrizadas (Sequelize)
+- ✅ **SQL Injection Prevention**: Uso de queries parametrizadas (TypeORM Repository pattern)
 - ✅ **NoSQL Injection Prevention**: Sanitización de operadores MongoDB (`$gt`, `$ne`, etc.)
 - ✅ **Schema Stripping**: Campos desconocidos son eliminados automáticamente
 

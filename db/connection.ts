@@ -1,37 +1,39 @@
 /**
- * Configuración de conexión a la base de datos MariaDB usando Sequelize
+ * Configuración de conexión a la base de datos MariaDB usando TypeORM
  * 
  * @module db/connection
  */
 
-import { Sequelize } from 'sequelize';
+import 'reflect-metadata';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import env from '../environments/index.js';
 import boom from '@hapi/boom';
 import logger from '../utils/logger.js';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
- * Configuración del pool de conexiones
+ * Configuración del pool de conexiones para TypeORM
  */
 interface PoolConfig {
   max: number;
   min: number;
-  acquire: number;
-  idle: number;
-  evict: number;
-  maxUses: number;
+  acquireTimeout: number;
+  idleTimeout: number;
 }
 
 /**
  * Default pool configuration for MariaDB connection.
- * Based on Sequelize best practices and production requirements.
+ * Based on TypeORM best practices and production requirements.
  */
 const DEFAULT_POOL_CONFIG: PoolConfig = {
   max: 10,
   min: 2,
-  acquire: 30000,
-  idle: 10000,
-  evict: 1000,
-  maxUses: 10000,
+  acquireTimeout: 30000,
+  idleTimeout: 10000,
 };
 
 /**
@@ -62,39 +64,67 @@ function buildPoolConfig(): PoolConfig {
   return poolConfig;
 }
 
-/**
- * Sequelize instance configured for MariaDB connection.
- */
-const sequelize = new Sequelize(
-  env.db.maria.database,
-  env.db.maria.user,
-  env.db.maria.password!,
-  {
-    host: env.db.maria.host,
-    port: Number(env.db.maria.port),
-    dialect: env.db.maria.dialect,
-    logging: env.execution === 'development' ? (msg: string) => logger.info(msg) : false,
-    pool: buildPoolConfig(),
-  }
-);
+const poolConfig = buildPoolConfig();
 
 /**
- * Tests the database connection.
+ * TypeORM DataSource configuration for MariaDB.
+ * Uses mysql2 driver which is compatible with MariaDB.
+ */
+const dataSourceOptions: DataSourceOptions = {
+  type: 'mysql',
+  host: env.db.maria.host,
+  port: Number(env.db.maria.port),
+  username: env.db.maria.user,
+  password: env.db.maria.password,
+  database: env.db.maria.database,
+  synchronize: false, // NEVER use true in production
+  logging: env.execution === 'development',
+  entities: [join(__dirname, '../entities/**/*.entity.{ts,js}')],
+  migrations: [join(__dirname, '../migrations/**/*.{ts,js}')],
+  subscribers: [join(__dirname, '../subscribers/**/*.{ts,js}')],
+  // Connection pool configuration (Bulkhead pattern - Section 12.C)
+  extra: {
+    connectionLimit: poolConfig.max,
+    waitForConnections: true,
+    queueLimit: 0,
+    acquireTimeout: poolConfig.acquireTimeout,
+    idleTimeout: poolConfig.idleTimeout,
+  },
+  // Connection timeouts to prevent long-running queries (Section 3.C)
+  connectTimeout: 10000,
+  // Enable timezone support
+  timezone: '+00:00',
+  // Charset for proper UTF-8 support
+  charset: 'utf8mb4',
+};
+
+/**
+ * TypeORM DataSource instance configured for MariaDB connection.
+ */
+export const AppDataSource = new DataSource(dataSourceOptions);
+
+/**
+ * Initializes and tests the database connection.
  * Should be called explicitly during application startup.
+ * Implements circuit breaker pattern for resilience (Section 12.A).
  * 
  * @throws If connection fails
  */
-async function testConnection(): Promise<void> {
+export async function initializeDatabase(): Promise<void> {
   try {
-    await sequelize.authenticate();
-    logger.db('Connection to MariaDB established successfully', {
-      database: env.db.maria.database,
-      host: env.db.maria.host,
-    });
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+      logger.db('Connection to MariaDB established successfully', {
+        database: env.db.maria.database,
+        host: env.db.maria.host,
+        port: env.db.maria.port,
+      });
+    }
   } catch (error) {
     const err = error as Error;
     logger.error('Unable to connect to database', {
       error: err.message,
+      stack: err.stack,
       database: env.db.maria.database,
       host: env.db.maria.host,
     });
@@ -102,4 +132,31 @@ async function testConnection(): Promise<void> {
   }
 }
 
-export { sequelize, testConnection };
+/**
+ * Closes the database connection gracefully.
+ * Should be called during application shutdown.
+ */
+export async function closeDatabase(): Promise<void> {
+  try {
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+      logger.info('Database connection closed successfully');
+    }
+  } catch (error) {
+    const err = error as Error;
+    logger.error('Error closing database connection', {
+      error: err.message,
+    });
+  }
+}
+
+/**
+ * Legacy alias for backwards compatibility
+ * @deprecated Use initializeDatabase() instead
+ */
+export const testConnection = initializeDatabase;
+
+/**
+ * Export DataSource for use in repositories
+ */
+export default AppDataSource;

@@ -29,8 +29,7 @@ export interface Environment {
       user: string;
       password?: string;
       database: string;
-      dialect: 'mariadb';
-      logging: boolean | ((sql: string) => void);
+      logging: boolean;
     };
   };
 }

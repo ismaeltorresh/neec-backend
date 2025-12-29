@@ -6,6 +6,7 @@
  */
 
 import 'dotenv/config';
+import 'reflect-metadata';
 import * as Sentry from '@sentry/node';
 import './instrument.js';
 import type { Request, Response, NextFunction } from 'express';
@@ -21,7 +22,7 @@ import perfTimeout from './middlewares/perf.handler.js';
 import { limiter } from './middlewares/rate-limit.handler.js';
 import compression from 'compression';
 import routerApp from './routes/index.js';
-import { sequelize } from './db/connection.js';
+import { AppDataSource, initializeDatabase, closeDatabase } from './db/connection.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -162,9 +163,11 @@ if (env.execution === 'development' || env.execution === 'production') {
     let dbOk = false;
     
     try {
-      await sequelize.authenticate();
-      dbStatus = 'connected';
-      dbOk = true;
+      if (AppDataSource.isInitialized) {
+        await AppDataSource.query('SELECT 1');
+        dbStatus = 'connected';
+        dbOk = true;
+      }
     } catch (error) {
       const err = error as Error;
       logger.error('Health check: database connection failed', { error: err.message });
@@ -240,7 +243,7 @@ if (env.execution === 'development' || env.execution === 'production') {
 }
 
 // *** START SERVER ***
-// Test connection and start server after all middleware/routes are configured
+// Initialize database and start server after all middleware/routes are configured
 (async () => {
   try {
     // Validate port configuration
@@ -248,24 +251,52 @@ if (env.execution === 'development' || env.execution === 'production') {
       throw new Error('PORT environment variable is not defined');
     }
 
-    // Test the connection to the database
-    if (env.execution !== 'development') {
-      await sequelize.authenticate();
-      logger.db('MariaDB connection successful');
-      await sequelize.sync();
+    // Initialize TypeORM DataSource (Circuit Breaker pattern - Section 12.A)
+    if (env.execution !== 'test') {
+      await initializeDatabase();
+      logger.db('TypeORM DataSource initialized successfully');
     }
 
     // Start the server
-    app.listen(env.port, () => {
+    const server = app.listen(env.port, () => {
       const message = env.execution === 'development' 
         ? `Server initialized ${env.server}:${env.port} in mode ${env.execution}` 
         : `Server initialized on port ${env.port} in mode ${env.execution}`;
       logger.info(message);
     });
 
+    // Graceful shutdown handling
+    const gracefulShutdown = async (signal: string) => {
+      logger.info(`${signal} received: closing HTTP server and database connection`);
+      
+      server.close(async () => {
+        logger.info('HTTP server closed');
+        
+        try {
+          await closeDatabase();
+          logger.info('Database connection closed');
+          process.exit(0);
+        } catch (error) {
+          const err = error as Error;
+          logger.error('Error during shutdown', { error: err.message });
+          process.exit(1);
+        }
+      });
+
+      // Force shutdown after 10 seconds
+      setTimeout(() => {
+        logger.error('Could not close connections in time, forcefully shutting down');
+        process.exit(1);
+      }, 10000);
+    };
+
+    // Listen for termination signals
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
   } catch (err) {
     const error = err as Error;
-    logger.error('Error al iniciar el servidor', { error: error.message });
+    logger.error('Error al iniciar el servidor', { error: error.message, stack: error.stack });
     process.exit(1);
   }
 })();
