@@ -1,17 +1,20 @@
 # NEEC Backend
 
-> Backend API REST para la aplicación NEEC construido con Node.js, Express.js y MariaDB/MySQL
+> Backend API REST para la aplicación NEEC construido con Node.js, Express.js, TypeScript y MariaDB/MySQL
 
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.19-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![ES Modules](https://img.shields.io/badge/ES-Modules-F7DF1E?logo=javascript&logoColor=black)](https://nodejs.org/api/esm.html)
 [![Tests](https://img.shields.io/badge/Tests-12%2F12_passing-success?logo=jest)](https://jestjs.io/)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-> **✨ Últimas mejoras:** Sistema de logging centralizado, validación segura con `parseIntSafe`, async error handling con 12 tests, y ES Modules migration completa.
+> **✨ Últimas mejoras:** Migración completa a TypeScript, sistema de logging centralizado, validación segura con tipos, async error handling con 12 tests, y ES Modules migration completa.
 
 ## 📋 Tabla de Contenidos
 
+- [Tabla de Contenidos](#-tabla-de-contenidos)
 - [Descripción](#-descripción)
 - [Arquitectura](#-arquitectura)
 - [Tecnologías](#-tecnologías)
@@ -19,6 +22,7 @@
 - [Instalación](#-instalación)
 - [Configuración](#-configuración)
 - [Scripts Disponibles](#-scripts-disponibles)
+- [CI/CD Pipeline](#-cicd-pipeline)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Endpoints API](#-endpoints-api)
 - [Seguridad](#-seguridad)
@@ -38,16 +42,17 @@ NEEC Backend es una API REST construida siguiendo los principios de **arquitectu
 
 ### Características Principales
 
+- ✅ **TypeScript**: Migración completa con tipos estrictos y seguridad en tiempo de compilación
 - ✅ **Arquitectura en Capas**: Separación clara entre Routes, Controllers, Services y Repositories
-- ✅ **Validación Robusta**: Validación de entrada con Joi + utilidades de parsing seguro
+- ✅ **Validación Robusta**: Validación de entrada con **Zod** + inferencia automática de tipos TypeScript
 - ✅ **Logging Centralizado**: Sistema de logging estructurado con 6 niveles (info, warn, error, debug, db, perf)
 - ✅ **Async/Await Error Handling**: Middleware asyncHandler, withTimeout, withRetry con 12 tests
 - ✅ **Seguridad Hardening**: Helmet, CORS, sanitización de inputs, gestión segura de errores
 - ✅ **Autenticación OAuth 2.0**: Integración con Auth0 (JWT Bearer tokens)
 - ✅ **Multi-DataSource**: Soporte para SQL, NoSQL, mock y fake data
-- ✅ **Paginación Avanzada**: Sistema de paginación con filtros, búsqueda y ordenamiento
+- ✅ **Paginación Avanzada**: Sistema de paginación tipado con filtros, búsqueda y ordenamiento
 - ✅ **Monitoreo Sentry**: Tracking de errores y profiling en producción
-- ✅ **Testing**: Suite de tests con Jest y Supertest
+- ✅ **Testing**: Suite de tests con Jest y ts-jest
 - ✅ **Documentación OpenAPI**: Especificación OpenAPI 3.0+ con Swagger UI
 - ✅ **Generador de Servicios**: CLI para scaffold automático de nuevos endpoints
 
@@ -69,7 +74,7 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 ┌─────────────────────────────────────────┐
 │      Routes/Controllers Layer           │
 │  • Manejo de req/res HTTP               │
-│  • Validación de entrada (Joi)          │
+│  • Validación de entrada (Zod)          │
 │  • Llamada a servicios                  │
 │  • Respuestas HTTP estandarizadas       │
 └─────────────────────────────────────────┘
@@ -99,7 +104,7 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 1. **Separation of Concerns**: Cada capa tiene una responsabilidad única y bien definida
 2. **Dependency Injection**: Las capas superiores dependen de interfaces, no de implementaciones
 3. **Error Boundaries**: Manejo centralizado de errores con @hapi/boom
-4. **Input Validation**: Toda entrada de usuario es validada con Joi antes de procesarse
+4. **Input Validation**: Toda entrada de usuario es validada con **Zod** antes de procesarse (con inferencia automática de tipos)
 5. **Security by Default**: Helmet, CORS, rate limiting, y sanitización de inputs
 
 ---
@@ -109,7 +114,7 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 ### Core
 - **Runtime**: Node.js v20 LTS+
 - **Framework**: Express.js 4.19
-- **Lenguaje**: JavaScript ES6+ (ESM)
+- **Lenguaje**: TypeScript 5.0+ (compilado a JavaScript ES2022 con ESM)
 
 ### Base de Datos
 - **ORM**: Sequelize 6.37
@@ -117,23 +122,25 @@ El proyecto sigue una **arquitectura en capas** estricta para garantizar la sepa
 
 ### Seguridad
 - **Autenticación**: express-oauth2-jwt-bearer (Auth0)
-- **Validación**: Joi 17.13
+- **Validación**: **Zod 3.22** con inferencia automática de tipos TypeScript
 - **Hardening**: Helmet 8.0
 - **Error Handling**: @hapi/boom 10.0
 
 ### Desarrollo y Testing
-- **Testing**: Jest 29.7, Supertest 6.3
+- **Testing**: Jest 29.7 + ts-jest
+- **TypeScript**: TypeScript 5.0+ con strict mode
 - **Linting**: ESLint 9.8
-- **Dev Server**: Nodemon 3.1
+- **Dev Server**: Nodemon 3.1 + ts-node
 
 ### Monitoreo
 - **APM**: Sentry (Node + Profiling)
-- **Logging**: Sistema centralizado con timestamps, contexto JSON y niveles (utils/logger.js)
-- **Validation**: Utilidades de parsing seguro (parseIntSafe, validatePagination)
+- **Logging**: Sistema centralizado tipado con timestamps, contexto JSON y niveles (utils/logger.ts)
+- **Validation**: Utilidades de parsing seguro con tipos (parseIntSafe, validatePagination)
 
 ### Documentación
 - **Spec**: OpenAPI 3.0 (YAML)
 - **UI**: Swagger UI Express 4.6
+- **Types**: Interfaces TypeScript completas en `types/index.ts`
 
 ---
 
@@ -230,21 +237,32 @@ Estos se cargan automáticamente según `NODE_ENV`.
 ### Desarrollo
 
 ```bash
-# Iniciar servidor en modo desarrollo con hot-reload
+# Iniciar servidor en modo desarrollo con hot-reload (TypeScript)
 npm run dev
+
+# Verificar tipos sin compilar
+npm run type-check
+```
+
+### Compilación
+
+```bash
+# Compilar TypeScript a JavaScript
+npm run build
 ```
 
 ### Producción
 
 ```bash
-# Iniciar servidor en modo producción
+# Compilar y ejecutar en producción
+npm run build
 npm start
 ```
 
 ### Testing
 
 ```bash
-# Ejecutar todos los tests con Jest
+# Ejecutar todos los tests con Jest (soporta .ts y .js)
 npm test
 ```
 
@@ -466,6 +484,92 @@ Helmet configura automáticamente:
 
 ---
 
+## 🚀 CI/CD Pipeline
+
+El proyecto incluye pipelines de integración continua y despliegue continuo con **GitHub Actions**.
+
+### Workflows Configurados
+
+#### 1. **CI/CD Pipeline** (`.github/workflows/ci-cd.yml`)
+
+**Triggers**:
+- Push a `main` o `develop`
+- Pull requests a `main` o `develop`
+
+**Jobs**:
+
+**Build and Test** (Matrix: Node 20.x, 22.x):
+- ✓ Checkout del código
+- ✓ Instalación de dependencias (`npm ci`)
+- ✓ Type check (`npm run type-check`)
+- ✓ **Build de TypeScript (`npm run build`)**
+- ✓ Ejecución de tests (`npm test`)
+- ✓ Upload de artefactos compilados
+
+**Security Audit**:
+- ✓ Auditoría de seguridad (`npm audit`)
+- ✓ Verificación de vulnerabilidades
+
+**Deploy Staging** (rama `develop`):
+- ✓ Build para staging
+- ✓ Despliegue automático a entorno de staging
+
+**Deploy Production** (rama `main`):
+- ✓ Build para producción
+- ✓ Tests de producción
+- ✓ Despliegue a producción (requiere aprobación manual)
+
+#### 2. **Pull Request Checks** (`.github/workflows/pr-checks.yml`)
+
+**Triggers**:
+- Apertura, sincronización o reapertura de PRs
+
+**Validaciones**:
+- ✓ Type check de TypeScript
+- ✓ Build del proyecto
+- ✓ Tests con cobertura
+- ✓ Comentario automático en el PR con resultados
+
+### Configurar Secrets
+
+Para deploy en producción, configura los siguientes secrets en GitHub:
+
+```bash
+# Settings → Secrets and variables → Actions → New repository secret
+
+# Para deploy con SSH
+SSH_PRIVATE_KEY=<tu-clave-privada>
+SSH_HOST=<tu-servidor>
+SSH_USER=<tu-usuario>
+
+# Para deploy en AWS
+AWS_ACCESS_KEY_ID=<tu-access-key>
+AWS_SECRET_ACCESS_KEY=<tu-secret-key>
+
+# Para deploy en Heroku
+HEROKU_API_KEY=<tu-api-key>
+HEROKU_APP_NAME=<nombre-de-tu-app>
+```
+
+### Personalizar el Pipeline
+
+Edita `.github/workflows/ci-cd.yml` para agregar tu estrategia de deploy:
+
+```yaml
+- name: Deploy to production
+  run: |
+    # Ejemplo: Deploy a servidor con PM2
+    ssh user@server "cd /app && git pull && npm ci && npm run build && pm2 reload ecosystem.config.js"
+    
+    # Ejemplo: Deploy a AWS
+    aws s3 sync dist/ s3://your-bucket --delete
+    
+    # Ejemplo: Deploy a Heroku
+    git push heroku main
+```
+
+---
+
 ## 🧪 Testing
 
 ### Ejecutar Tests
@@ -480,16 +584,16 @@ npm test async.handler.test.js
 
 ### Tipos de Tests
 
-1. **Unit Tests**: Test de funciones y utilidades aisladas
-2. **Integration Tests**: Test de endpoints completos con Supertest
-3. **E2E Tests**: Script bash para testing de endpoints reales
+1. **Unit Tests**: Test de funciones y utilidades aisladas (middlewares, utils)
+2. **E2E Tests**: Script bash para testing de endpoints reales
+3. **Integration Tests**: Se pueden agregar con supertest si se necesitan
 
 ### Ejemplo de Test
 
-```javascript
-// routes/template.routes.test.js
-import request from 'supertest';
-import express from 'express';
+```typescript
+// middlewares/async.handler.test.ts
+import { describe, it, expect } from '@jest/globals';
+import { asyncHandler } from './async.handler.js';
 import templateRoutes from './template.routes.js';
 
 describe('GET /api/v1/template', () => {
@@ -809,54 +913,83 @@ ISC © [@ismaeltorresh](https://github.com/ismaeltorresh)
 
 El proyecto ha sido refactorizado siguiendo las mejores prácticas de Node.js y los estándares de la industria:
 
-#### 1️⃣ **ES Modules Migration** (29 archivos)
+#### 1️⃣ **Migración Completa a TypeScript** (21 archivos)
+- ✅ Migración completa de JavaScript a TypeScript con strict mode
+- ✅ Tipos e interfaces en `types/index.ts` para toda la aplicación
+- ✅ Configuración de compilación con tsconfig.json
+- ✅ Integración de ts-jest para tests con TypeScript
+- ✅ Tests migrados a TypeScript: `async.handler.test.ts`
+- ✅ 0 errores de compilación, 12/12 tests pasando
+- ✅ Archivos JavaScript antiguos eliminados (limpieza completa)
+
+#### 2️⃣ **Migración de Joi a Zod** (29 de diciembre de 2025)
+- ✅ Sistema de validación migrado de Joi a **Zod**
+- ✅ Inferencia automática de tipos desde schemas (`z.infer<typeof schema>`)
+- ✅ Eliminación de interfaces duplicadas (types se infieren de schemas)
+- ✅ Middleware validator actualizado con `safeParse()` y mejor manejo de errores
+- ✅ Bundle más ligero (~8KB vs ~146KB minificado)
+- ✅ Documentación completa en `docs/ZOD_MIGRATION.md`
+
+#### 3️⃣ **ES Modules Migration** (29 archivos)
 - ✅ Migración completa de CommonJS (`require`) a ES Modules (`import/export`)
 - ✅ Actualización de `package.json` con `"type": "module"`
 - ✅ Configuración de Jest para ES Modules
 - ✅ 100% de compatibilidad con Node.js 20+
 
-#### 2️⃣ **Sistema de Logging Centralizado** (7 archivos)
-- ✅ Nuevo módulo `utils/logger.js` con 6 niveles de logging
+#### 4️⃣ **Sistema de Logging Centralizado** (7 archivos)
+- ✅ Nuevo módulo `utils/logger.ts` con 6 niveles de logging y tipos
 - ✅ Timestamps automáticos en formato ISO 8601
 - ✅ Contexto JSON estructurado para mejor debugging
 - ✅ Filtrado por ambiente (debug solo en development)
 - ✅ Reemplazo de ~15 llamadas a `console.log/warn/error`
 
-#### 3️⃣ **Validación Segura** (6 rutas refactorizadas)
-- ✅ Nuevo módulo `utils/validation.js`
+#### 5️⃣ **Validación Segura** (6 rutas refactorizadas)
+- ✅ Nuevo módulo `utils/validation.ts` con tipos
 - ✅ `parseIntSafe()`: Parsing seguro con validación de rangos
 - ✅ `validatePagination()`: Wrapper para paginación consistente
 - ✅ 34 ocurrencias de `parseInt()` eliminadas
 - ✅ Prevención de NaN y valores fuera de rango
 
-#### 4️⃣ **Async/Await Error Handling** (Nuevo middleware)
-- ✅ `asyncHandler()`: Elimina try-catch en rutas
+#### 6️⃣ **Async/Await Error Handling** (Nuevo middleware)
+- ✅ `asyncHandler()`: Elimina try-catch en rutas con tipos completos
 - ✅ `withTimeout()`: Timeouts automáticos para operaciones async
 - ✅ `withRetry()`: Reintentos con backoff exponencial
 - ✅ 12/12 tests passing en `async.handler.test.js`
 
-#### 5️⃣ **Hardening de Seguridad**
+#### 7️⃣ **Hardening de Seguridad**
 - ✅ Variables sensibles movidas a `.env` (Sentry DSN, DB credentials)
 - ✅ Script de auditoría de seguridad (`npm run security:audit`)
 - ✅ Documentación de seguridad en `docs/SECURITY.md`
 - ✅ Validación de variables de entorno en startup
 
-#### 6️⃣ **Calidad de Código**
+#### 8️⃣ **Calidad de Código**
 - ✅ Eliminación de variables globales mutables
 - ✅ Manejo de errores con contexto estructurado
 - ✅ Validación de ambiente en startup (fail-fast)
 
-#### 7️⃣ **Limpieza del Proyecto** (Diciembre 2025)
-- ✅ Eliminación de dependencias no utilizadas (9 paquetes, 79 total con transitivas)
+#### 9️⃣ **Limpieza del Proyecto** (Diciembre 2025)
+- ✅ Eliminación de dependencias no utilizadas (Joi removido después de migración a Zod)
 - ✅ Eliminación de servicios de ejemplo (products, people, address, blogs, users)
 - ✅ Eliminación de archivos obsoletos y documentación redundante
 - ✅ 0 vulnerabilidades después de npm audit fix
 - ✅ Proyecto optimizado con solo servicio template como base
 
+#### 🔟 **CI/CD Pipeline con GitHub Actions** (29 de diciembre de 2025)
+- ✅ Pipeline completo de CI/CD configurado
+- ✅ **Build automático de TypeScript (`npm run build`)** antes del deploy
+- ✅ Type checking, tests y security audit en cada push/PR
+- ✅ Matrix testing con Node.js 20.x y 22.x
+- ✅ Deploy automático a staging (rama develop) y producción (rama main)
+- ✅ Pull Request checks con comentarios automáticos
+- ✅ Upload de artefactos compilados para deploy
+
 ### 📚 Documentación
 
 Documentación disponible:
 - `docs/SECURITY.md` - Guía de seguridad y gestión de secrets
+- `docs/ZOD_MIGRATION.md` - Migración de Joi a Zod (29 de diciembre de 2025)
+- `docs/TYPESCRIPT_MIGRATION.md` - Migración a TypeScript
+- `docs/MEJORAS_IMPLEMENTADAS.md` - Registro de mejoras implementadas
 
 ---
 

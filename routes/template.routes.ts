@@ -1,17 +1,38 @@
+/**
+ * Template routes - CRUD operations
+ * 
+ * @module routes/template.routes
+ */
+
+import type { Request, Response } from 'express';
 import boom from '@hapi/boom';
 import env from '../environments/index.js';
 import express from 'express';
 import validatorHandler from '../middlewares/validator.handler.js';
 import { asyncHandler, withTimeout } from '../middlewares/async.handler.js';
-import { schema, get, del, post, update, paramsSchema } from '../schemas/template.schema.js';
+import { 
+  schema, 
+  get, 
+  del, 
+  post, 
+  update, 
+  paramsSchema,
+  type GetInput,
+  type PostInput,
+  type UpdateInput,
+  type DeleteInput,
+  type ParamsInput
+} from '../schemas/template.schema.js';
 import { paginated } from '../utils/response.js';
 import { validatePagination } from '../utils/validation.js';
+import type { PaginationResult } from '../types/index.js';
 
 const endpoint = 'template';
 
 const router = express.Router();
 
-router.get('/schema', asyncHandler(async (req, res) => {
+// Get schema endpoint (development only)
+router.get('/schema', asyncHandler(async (_req: Request, res: Response) => {
   if (env.execution === 'development') {
     res.status(200).json(schema);
   } else {
@@ -19,13 +40,15 @@ router.get('/schema', asyncHandler(async (req, res) => {
   }
 }));
 
-router.get("/debug-sentry", function mainHandler(req, res) {
+// Debug Sentry endpoint
+router.get("/debug-sentry", function mainHandler(_req: Request, _res: Response) {
   throw new Error("My intentionally Sentry error! is only test");
 });
 
-router.get('/', validatorHandler(get, 'query'), asyncHandler(async (req, res) => {
-  const inputData = req.query;
-  let result;
+// List all templates
+router.get('/', validatorHandler(get, 'query'), asyncHandler(async (req: Request, res: Response) => {
+  const inputData = req.query as unknown as GetInput;
+  let result: unknown;
 
   if (inputData.dataSource === 'sql') {
     result = await withTimeout(sqlList(inputData), 5000);
@@ -49,13 +72,14 @@ router.get('/', validatorHandler(get, 'query'), asyncHandler(async (req, res) =>
   return res.status(200).json(result);
 }));
 
+// Get template by ID
 router.get('/:id', 
   validatorHandler(paramsSchema, 'params'),
   validatorHandler(get, 'query'), 
-  asyncHandler(async (req, res) => {
-  const inputData = req.query;
-  inputData.id = req.params.id;
-  let result;
+  asyncHandler(async (req: Request, res: Response) => {
+  const params = req.params as ParamsInput;
+  const inputData = { ...req.query as unknown as GetInput, id: params.id };
+  let result: unknown;
 
   if (inputData.dataSource === 'sql') {
     result = await sqlFindById(inputData);
@@ -79,9 +103,10 @@ router.get('/:id',
   return res.status(200).json(result);
 }));
 
-router.post('/', validatorHandler(post, 'body'), asyncHandler(async (req, res) => {
-  const inputData = req.body;
-  let result;
+// Create new template
+router.post('/', validatorHandler(post, 'body'), asyncHandler(async (req: Request, res: Response) => {
+  const inputData = req.body as PostInput;
+  let result: unknown;
 
   if (inputData.dataSource === 'sql') {
     result = await sqlCreate(inputData);
@@ -99,13 +124,14 @@ router.post('/', validatorHandler(post, 'body'), asyncHandler(async (req, res) =
   return res.status(201).json(result);
 }));
 
+// Update template
 router.patch('/:id', 
   validatorHandler(paramsSchema, 'params'),
   validatorHandler(update, 'body'), 
-  asyncHandler(async (req, res) => {
-  const inputData = req.body;
-  inputData.id = req.params.id;
-  let result;
+  asyncHandler(async (req: Request, res: Response) => {
+  const params = req.params as ParamsInput;
+  const inputData = { ...req.body as UpdateInput, id: params.id };
+  let result: unknown;
 
   if (inputData.dataSource === 'sql') {
     result = await sqlUpdate(inputData);
@@ -123,13 +149,14 @@ router.patch('/:id',
   return res.status(200).json(result);
 }));
 
+// Delete template
 router.delete('/:id', 
   validatorHandler(paramsSchema, 'params'),
   validatorHandler(del, 'body'), 
-  asyncHandler(async (req, res) => {
-  const inputData = req.body;
-  inputData.id = req.params.id;
-  let result;
+  asyncHandler(async (req: Request, res: Response) => {
+  const params = req.params as ParamsInput;
+  const inputData = { ...req.body as DeleteInput, id: params.id };
+  let result: unknown;
 
   if (inputData.dataSource === 'sql') {
     result = await sqlDelete(inputData);
@@ -148,25 +175,12 @@ router.delete('/:id',
 }));
 
 /**
- * Retrieves a paginated list of template from the database using the provided filters, search criteria, and sorting options.
- *
- * @param {Object} inputData - The request parameters for pagination and filtering.
- * @param {string} [inputData.brand] - Brand name filter.
- * @param {number|string} [inputData.categoryId] - Category identifier filter.
- * @param {string} [inputData.sku] - SKU filter.
- * @param {string} [inputData.code] - Product code filter.
- * @param {string} [inputData.q] - Search query applied across multiple product columns.
- * @param {string} [inputData.recordStatus] - Record status filter for active, inactive, etc.
- * @param {number|string} [inputData.page] - Page number for pagination.
- * @param {number|string} [inputData.pageSize] - Number of records per page.
- * @param {string} [inputData.sortBy] - Field by which to sort the results.
- * @param {('ASC'|'DESC')} [inputData.sortDir] - Sort direction.
- * @returns {Promise<Object>} Resolves to the paginated result set containing product data.
+ * Retrieves a paginated list of template from the database
  */
-async function sqlList(inputData) {
+async function sqlList(inputData: GetInput): Promise<PaginationResult<unknown>> {
   const { sqlPaginate } = await import('../utils/pagination.js');
   const { page, pageSize } = validatePagination(inputData);
-  const filters = {
+  const filters: Record<string, unknown> = {
     brand: inputData.brand,
     categoryId: inputData.categoryId,
     sku: inputData.sku,
@@ -183,20 +197,17 @@ async function sqlList(inputData) {
     filters,
     allowedFilters: ['brand', 'categoryId', 'sku', 'code'],
     search,
-    sortBy: inputData.sortBy,
-    sortDir: inputData.sortDir,
-    allowedSorts: ['updatedAt','createdAt','price','brand','code'],
+    sortColumn: inputData.sortBy,
+    sortOrder: inputData.sortDir,
+    allowedSortColumns: ['updatedAt','createdAt','price','brand','code'],
   });
   return result;
 }
 
 /**
- * Retrieves a paginated subset of template from the NoSQL mock data source.
- *
- * @param {{ page?: number|string, pageSize?: number|string }} inputData - Pagination parameters provided by the caller.
- * @returns {Promise<Object>} Paginated result containing the requested page of template.
+ * Retrieves a paginated subset of template from the NoSQL mock data source
  */
-async function nosqlList(inputData) {
+async function nosqlList(inputData: GetInput): Promise<PaginationResult<unknown>> {
   const nosqlMock = await import('../utils/nosqlMock.js');
   const { page, pageSize } = validatePagination(inputData);
   const paged = nosqlMock.paginateList(endpoint, page, pageSize);
@@ -204,24 +215,18 @@ async function nosqlList(inputData) {
 }
 
 /**
- * Retrieves a template record from the NoSQL mock datastore by identifier.
- *
- * @param {{ id: string }} inputData - The lookup payload containing the template identifier.
- * @returns {Object} The matching template record if found, otherwise an empty object.
+ * Retrieves a template record from the NoSQL mock datastore by identifier
  */
-async function nosqlFindById(inputData) {
+async function nosqlFindById(inputData: GetInput): Promise<Record<string, unknown>> {
   const nosqlMock = await import('../utils/nosqlMock.js');
-  const record = nosqlMock.findById(endpoint, inputData.id) || {};
+  const record = nosqlMock.findById(endpoint, inputData.id!) || {};
   return record;
 }
 
 /**
- * Retrieves fake data list with pagination.
- *
- * @param {Object} inputData - Pagination parameters.
- * @returns {Promise<Object>} Paginated fake data.
+ * Retrieves fake data list with pagination
  */
-async function getFakeList(inputData) {
+async function getFakeList(inputData: GetInput): Promise<PaginationResult<unknown>> {
   const fakeData = (await import('../test/fakedata.js')).default;
   const list = fakeData.template || [];
   const { page, pageSize } = validatePagination(inputData);
@@ -229,35 +234,26 @@ async function getFakeList(inputData) {
 }
 
 /**
- * Retrieves a fake record by ID.
- *
- * @param {{ id: string }} inputData - The lookup payload.
- * @returns {Object} The matching fake record if found.
+ * Retrieves a fake record by ID
  */
-async function getFakeById(inputData) {
+async function getFakeById(inputData: GetInput): Promise<Record<string, unknown>> {
   const fakeData = (await import('../test/fakedata.js')).default;
   const list = fakeData.template || [];
-  return list.find(item => item.id === inputData.id) || {};
+  return list.find((item: any) => item.id === inputData.id) || {};
 }
 
 /**
- * Retrieves a template record from SQL database by identifier.
- *
- * @param {{ id: string }} inputData - The lookup payload.
- * @returns {Promise<Object>} The matching template record.
+ * Retrieves a template record from SQL database by identifier
  */
-async function sqlFindById(inputData) {
+async function sqlFindById(_inputData: GetInput): Promise<Record<string, unknown>> {
   // TODO: Implement SQL findById logic
   return {};
 }
 
 /**
- * Creates a new template record in SQL database.
- *
- * @param {Object} inputData - The template data to create.
- * @returns {Promise<Object>} The created template record.
+ * Creates a new template record in SQL database
  */
-async function sqlCreate(inputData) {
+async function sqlCreate(inputData: PostInput): Promise<Record<string, unknown>> {
   // TODO: Implement SQL create logic
   return {
     message: 'Created',
@@ -267,12 +263,9 @@ async function sqlCreate(inputData) {
 }
 
 /**
- * Creates a new template record in NoSQL database.
- *
- * @param {Object} inputData - The template data to create.
- * @returns {Promise<Object>} The created template record.
+ * Creates a new template record in NoSQL database
  */
-async function nosqlCreate(inputData) {
+async function nosqlCreate(inputData: PostInput): Promise<Record<string, unknown>> {
   // TODO: Implement NoSQL create logic
   return {
     message: 'Created',
@@ -282,12 +275,9 @@ async function nosqlCreate(inputData) {
 }
 
 /**
- * Updates a template record in SQL database.
- *
- * @param {Object} inputData - The template data to update.
- * @returns {Promise<Object>} The update result.
+ * Updates a template record in SQL database
  */
-async function sqlUpdate(inputData) {
+async function sqlUpdate(inputData: UpdateInput): Promise<Record<string, unknown>> {
   // TODO: Implement SQL update logic
   return {
     message: 'Updated',
@@ -296,12 +286,9 @@ async function sqlUpdate(inputData) {
 }
 
 /**
- * Updates a template record in NoSQL database.
- *
- * @param {Object} inputData - The template data to update.
- * @returns {Promise<Object>} The update result.
+ * Updates a template record in NoSQL database
  */
-async function nosqlUpdate(inputData) {
+async function nosqlUpdate(inputData: UpdateInput): Promise<Record<string, unknown>> {
   // TODO: Implement NoSQL update logic
   return {
     message: 'Updated',
@@ -310,12 +297,9 @@ async function nosqlUpdate(inputData) {
 }
 
 /**
- * Deletes a template record from SQL database.
- *
- * @param {Object} inputData - The template data with ID to delete.
- * @returns {Promise<Object>} The deletion result.
+ * Deletes a template record from SQL database
  */
-async function sqlDelete(inputData) {
+async function sqlDelete(inputData: DeleteInput): Promise<Record<string, unknown>> {
   // TODO: Implement SQL delete logic
   return {
     message: 'Deleted',
@@ -324,12 +308,9 @@ async function sqlDelete(inputData) {
 }
 
 /**
- * Deletes a template record from NoSQL database.
- *
- * @param {Object} inputData - The template data with ID to delete.
- * @returns {Promise<Object>} The deletion result.
+ * Deletes a template record from NoSQL database
  */
-async function nosqlDelete(inputData) {
+async function nosqlDelete(inputData: DeleteInput): Promise<Record<string, unknown>> {
   // TODO: Implement NoSQL delete logic
   return {
     message: 'Deleted',
@@ -338,31 +319,27 @@ async function nosqlDelete(inputData) {
 }
 
 /**
- * Checks if result has data based on data source type.
- *
- * @param {Object} result - The result object to check.
- * @param {string} dataSource - The data source type.
- * @returns {boolean} True if has data, false otherwise.
+ * Checks if result has data based on data source type
  */
-function checkHasData(result, dataSource) {
+function checkHasData(result: unknown, dataSource: string): boolean {
   if (dataSource === 'both') {
-    return (result.sql?.meta?.total > 0) || (result.nosql?.meta?.total > 0);
+    const r = result as { sql?: { meta?: { total: number } }; nosql?: { meta?: { total: number } } };
+    return (r.sql?.meta?.total ?? 0) > 0 || (r.nosql?.meta?.total ?? 0) > 0;
   }
-  return result.meta?.total > 0;
+  const r = result as { meta?: { total: number } };
+  return (r.meta?.total ?? 0) > 0;
 }
 
 /**
- * Checks if a single record result has data.
- *
- * @param {Object} result - The result object to check.
- * @param {string} dataSource - The data source type.
- * @returns {boolean} True if has data, false otherwise.
+ * Checks if a single record result has data
  */
-function checkHasDataById(result, dataSource) {
+function checkHasDataById(result: unknown, dataSource: string): boolean {
   if (dataSource === 'both') {
-    return (result.sql?.id !== undefined) || (result.nosql?.id !== undefined);
+    const r = result as { sql?: { id?: string }; nosql?: { id?: string } };
+    return r.sql?.id !== undefined || r.nosql?.id !== undefined;
   }
-  return result.id !== undefined;
+  const r = result as { id?: string };
+  return r.id !== undefined;
 }
 
 export default router;

@@ -1,8 +1,16 @@
-const env = {
+/**
+ * Configuración de entorno para desarrollo
+ * 
+ * @module environments/environments.development
+ */
+
+import type { Environment } from '../types/index.js';
+
+const env: Environment = {
   execution: 'development',
   service: 'neec',
   server: 'http://localhost',
-  port: process.env.PORT || 8008,
+  port: Number(process.env.PORT) || 8008,
   bodyLimit: process.env.BODY_LIMIT || '100kb',
   requestTimeout: process.env.REQUEST_TIMEOUT ? Number(process.env.REQUEST_TIMEOUT) : 20000,
   whiteList: ['http://localhost:8008', undefined],

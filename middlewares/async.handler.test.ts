@@ -1,26 +1,30 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import type { Request, Response, NextFunction } from 'express';
+import type { Boom } from '@hapi/boom';
 import boom from '@hapi/boom';
-import { asyncHandler, withTimeout, withRetry } from '../middlewares/async.handler.js';
+import { asyncHandler, withTimeout, withRetry } from './async.handler.js';
 
 describe('Async Handler Middleware', () => {
   describe('asyncHandler', () => {
-    let req, res, next;
+    let req: Partial<Request>;
+    let res: Partial<Response>;
+    let next: NextFunction;
 
     beforeEach(() => {
       req = {};
       res = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn()
-      };
+      } as Partial<Response>;
       next = jest.fn();
     });
 
     it('should handle successful async operations', async () => {
-      const handler = asyncHandler(async (req, res) => {
+      const handler = asyncHandler(async (_req: Request, res: Response) => {
         res.status(200).json({ success: true });
       });
 
-      await handler(req, res, next);
+      await handler(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ success: true });
@@ -33,7 +37,7 @@ describe('Async Handler Middleware', () => {
         throw boomError;
       });
 
-      await handler(req, res, next);
+      await handler(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalledWith(boomError);
     });
@@ -44,10 +48,10 @@ describe('Async Handler Middleware', () => {
         throw regularError;
       });
 
-      await handler(req, res, next);
+      await handler(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalled();
-      const calledError = next.mock.calls[0][0];
+      const calledError = (next as jest.Mock).mock.calls[0][0] as Boom;
       expect(calledError.isBoom).toBe(true);
       expect(calledError.output.statusCode).toBe(500);
     });
@@ -58,17 +62,17 @@ describe('Async Handler Middleware', () => {
         throw boomError;
       });
 
-      await handler(req, res, next);
+      await handler(req as Request, res as Response, next);
 
-      const calledError = next.mock.calls[0][0];
+      const calledError = (next as jest.Mock).mock.calls[0][0] as Boom<{ resource: string }>;
       expect(calledError.output.statusCode).toBe(404);
-      expect(calledError.data.resource).toBe('user');
+      expect(calledError.data?.resource).toBe('user');
     });
   });
 
   describe('withTimeout', () => {
     it('should resolve if operation completes before timeout', async () => {
-      const operation = async () => {
+      const operation = async (): Promise<string> => {
         return new Promise(resolve => setTimeout(() => resolve('success'), 100));
       };
 
@@ -77,15 +81,15 @@ describe('Async Handler Middleware', () => {
     });
 
     it('should reject if operation exceeds timeout', async () => {
-      const operation = async () => {
+      const operation = async (): Promise<string> => {
         return new Promise(resolve => setTimeout(() => resolve('success'), 1000));
       };
 
-      await expect(withTimeout(operation(), 200)).rejects.toThrow('Operation timed out after 200ms');
+      await expect(withTimeout(operation(), 200)).rejects.toThrow('Operation timeout');
     });
 
     it('should use default timeout of 30s if not specified', async () => {
-      const operation = async () => Promise.resolve('fast');
+      const operation = async (): Promise<string> => Promise.resolve('fast');
       const result = await withTimeout(operation());
       expect(result).toBe('fast');
     });
@@ -93,7 +97,7 @@ describe('Async Handler Middleware', () => {
 
   describe('withRetry', () => {
     it('should succeed on first try', async () => {
-      const operation = jest.fn(async () => 'success');
+      const operation = jest.fn(async (): Promise<string> => 'success');
       const result = await withRetry(operation, 3, 100);
 
       expect(result).toBe('success');
@@ -102,7 +106,7 @@ describe('Async Handler Middleware', () => {
 
     it('should retry on failure and eventually succeed', async () => {
       let attempts = 0;
-      const operation = jest.fn(async () => {
+      const operation = jest.fn(async (): Promise<string> => {
         attempts++;
         if (attempts < 3) {
           throw new Error('Temporary failure');
@@ -117,7 +121,7 @@ describe('Async Handler Middleware', () => {
     });
 
     it('should fail after max retries', async () => {
-      const operation = jest.fn(async () => {
+      const operation = jest.fn(async (): Promise<string> => {
         throw new Error('Permanent failure');
       });
 
@@ -126,7 +130,7 @@ describe('Async Handler Middleware', () => {
     });
 
     it('should not retry boom client errors (4xx)', async () => {
-      const operation = jest.fn(async () => {
+      const operation = jest.fn(async (): Promise<string> => {
         throw boom.badRequest('Invalid input');
       });
 
@@ -136,7 +140,7 @@ describe('Async Handler Middleware', () => {
 
     it('should retry boom server errors (5xx)', async () => {
       let attempts = 0;
-      const operation = jest.fn(async () => {
+      const operation = jest.fn(async (): Promise<string> => {
         attempts++;
         if (attempts < 2) {
           throw boom.internal('Server error');

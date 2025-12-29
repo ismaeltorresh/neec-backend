@@ -5,13 +5,14 @@
  * @module utils/logger
  */
 
+import type { LogLevel, LogContext } from '../types/index.js';
+
 const isDevelopment = process.env.NODE_ENV === 'development';
-const isProduction = process.env.NODE_ENV === 'production';
 
 /**
  * Formatea mensaje con timestamp y nivel
  */
-const formatMessage = (level, message, context = {}) => {
+const formatMessage = (level: LogLevel, message: string, context: LogContext = {}): string => {
   const timestamp = new Date().toISOString();
   const contextStr = Object.keys(context).length > 0 
     ? ` | ${JSON.stringify(context)}` 
@@ -27,7 +28,7 @@ export const logger = {
   /**
    * Log informativo (solo desarrollo)
    */
-  info: (message, context = {}) => {
+  info: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {
       console.log(formatMessage('INFO', message, context));
     }
@@ -36,21 +37,21 @@ export const logger = {
   /**
    * Warning (desarrollo y producción)
    */
-  warn: (message, context = {}) => {
+  warn: (message: string, context: LogContext = {}): void => {
     console.warn(formatMessage('WARN', message, context));
   },
 
   /**
    * Error (siempre)
    */
-  error: (message, context = {}) => {
+  error: (message: string, context: LogContext = {}): void => {
     console.error(formatMessage('ERROR', message, context));
   },
 
   /**
    * Debug (solo desarrollo)
    */
-  debug: (message, context = {}) => {
+  debug: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {
       console.log(formatMessage('DEBUG', message, context));
     }
@@ -59,7 +60,7 @@ export const logger = {
   /**
    * Log de conexión DB (desarrollo)
    */
-  db: (message, context = {}) => {
+  db: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {
       console.log(formatMessage('DB', message, context));
     }
@@ -68,7 +69,7 @@ export const logger = {
   /**
    * Log de performance (desarrollo)
    */
-  perf: (message, context = {}) => {
+  perf: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {
       console.log(formatMessage('PERF', message, context));
     }

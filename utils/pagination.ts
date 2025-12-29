@@ -1,11 +1,21 @@
 /**
- * Simple paginate helper
- * @param {Array} items
- * @param {number} page 1-based
- * @param {number} pageSize
- * @returns {{data: Array, meta: {total:number,page:number,pageSize:number,totalPages:number}}}
+ * Utilidades de paginación
+ * 
+ * @module utils/pagination
  */
-function paginate(items, page = 1, pageSize = 10) {
+
+import type { PaginationResult, SqlPaginateOptions } from '../types/index.js';
+import { sequelize } from '../db/connection.js';
+import boom from '@hapi/boom';
+
+/**
+ * Simple paginate helper
+ * @param items - Array de items
+ * @param page - Número de página (1-based)
+ * @param pageSize - Tamaño de página
+ * @returns Resultado paginado
+ */
+function paginate<T>(items: T[], page: number = 1, pageSize: number = 10): PaginationResult<T> {
   const arr = Array.isArray(items) ? items : [];
   const p = Number(page) || 1;
   const ps = Number(pageSize) || 10;
@@ -16,9 +26,6 @@ function paginate(items, page = 1, pageSize = 10) {
   const meta = { total, page: p, pageSize: ps, totalPages };
   return { data, meta };
 }
-
-import { sequelize } from '../db/connection.js';
-import boom from '@hapi/boom';
 
 /**
  * Paginate a SQL table using COUNT + SELECT with LIMIT/OFFSET.
@@ -31,45 +38,49 @@ import boom from '@hapi/boom';
  * - columns: string (columns to select)
  * - whereClause: string (WHERE clause template, must reference :recordStatus if used)
  * - replacements: object (additional replacements for the query)
+ * - filters: { colName: value }
+ * - allowedFilters: array of column names allowed to be filtered
+ * - search: { q: 'term', columns: ['col1','col2'] }
  * - orderBy: string
+ * - sortColumn: string
+ * - sortOrder: 'ASC' | 'DESC'
+ * - allowedSortColumns: string[]
  */
-async function sqlPaginate({
-  table,
-  recordStatus = true,
-  page = 1,
-  pageSize = 10,
-  columns = '*',
-  whereClause = 'recordStatus = :recordStatus',
-  replacements = {},
-  // filters: { colName: value }
-  filters = {},
-  // allowedFilters: array of column names allowed to be filtered
-  allowedFilters = [],
-  // search: { q: 'term', columns: ['col1','col2'] }
-  search = undefined,
-  // sorting: either provide raw orderBy string (backward compatible)
-  // or provide sortBy + sortDir + allowedSorts to allow dynamic sorting
-  orderBy = 'updatedAt DESC',
-  sortBy = undefined,
-  sortDir = 'DESC',
-  allowedSorts = [],
-}) {
+async function sqlPaginate<T = unknown>(options: SqlPaginateOptions): Promise<PaginationResult<T>> {
+  const {
+    table,
+    recordStatus = true,
+    page = 1,
+    pageSize = 10,
+    columns = '*',
+    whereClause = 'recordStatus = :recordStatus',
+    replacements = {},
+    filters = {},
+    allowedFilters = [],
+    search = undefined,
+    orderBy = 'updatedAt DESC',
+    sortColumn = undefined,
+    sortOrder = 'DESC',
+    allowedSortColumns = [],
+  } = options;
+
   if (!table || typeof table !== 'string' || !/^[a-zA-Z0-9_]+$/.test(table)) {
     throw boom.badRequest('Invalid table name for sqlPaginate');
   }
 
-  const pageNum = parseInt(page, 10) || 1;
-  const size = parseInt(pageSize, 10) || 10;
+  const pageNum = parseInt(String(page), 10) || 1;
+  const size = parseInt(String(pageSize), 10) || 10;
   const offset = (pageNum - 1) * size;
 
   // Normalize recordStatus replacement: allow 'true'/'false', 1/0
-  let rs = recordStatus;
+  let rs: boolean | number | string = recordStatus;
   if (recordStatus === 'true' || recordStatus === true) rs = true;
   else if (recordStatus === 'false' || recordStatus === false) rs = false;
   else if (recordStatus === '1' || recordStatus === 1) rs = 1;
   else if (recordStatus === '0' || recordStatus === 0) rs = 0;
 
-  const merged = Object.assign({}, replacements, { recordStatus: rs, limit: size, offset });
+  const merged: Record<string, unknown> = { ...replacements, recordStatus: rs, limit: size, offset };
+
   // Build dynamic filter clauses from provided filters (only allowedFilters)
   let extraClauses = '';
   if (filters && typeof filters === 'object' && Array.isArray(allowedFilters) && allowedFilters.length) {
@@ -85,9 +96,9 @@ async function sqlPaginate({
       const placeholder = `f_${k}`;
       // Support wildcard searches if value contains %
       merged[placeholder] = filters[k];
-      if (typeof filters[k] === 'string' && (filters[k].includes('%') || filters[k].includes('*'))) {
+      if (typeof filters[k] === 'string' && (String(filters[k]).includes('%') || String(filters[k]).includes('*'))) {
         // convert * to % for convenience
-        const v = filters[k].replace(/\*/g, '%');
+        const v = String(filters[k]).replace(/\*/g, '%');
         merged[placeholder] = v;
         extraClauses += ` AND ${k} LIKE :${placeholder}`;
       } else {
@@ -108,20 +119,19 @@ async function sqlPaginate({
     const likes = validColumns.map(c => `${c} LIKE :${qPlaceholder}`);
     extraClauses += ` AND (${likes.join(' OR ')})`;
   }
-  }
 
   const finalWhere = `${whereClause}${extraClauses}`;
 
-  // Determine ORDER BY clause: prefer sortBy/sortDir when provided and allowed,
+  // Determine ORDER BY clause: prefer sortColumn/sortOrder when provided and allowed,
   // otherwise fall back to raw orderBy string for backward compatibility.
   let orderClause = orderBy;
-  if (sortBy) {
-    // validate sortBy is allowed
-    if (Array.isArray(allowedSorts) && allowedSorts.includes(sortBy) && /^[a-zA-Z0-9_]+$/.test(sortBy)) {
-      const dir = ('' + sortDir).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-      orderClause = `${sortBy} ${dir}`;
+  if (sortColumn) {
+    // validate sortColumn is allowed
+    if (Array.isArray(allowedSortColumns) && allowedSortColumns.includes(sortColumn) && /^[a-zA-Z0-9_]+$/.test(sortColumn)) {
+      const dir = (String(sortOrder)).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      orderClause = `${sortColumn} ${dir}`;
     } else {
-      throw boom.badRequest('Invalid sortBy value or not allowed');
+      throw boom.badRequest('Invalid sortColumn value or not allowed');
     }
   }
 
@@ -129,10 +139,15 @@ async function sqlPaginate({
   const dataQuery = `SELECT ${columns} FROM ${table} WHERE ${finalWhere} ORDER BY ${orderClause} LIMIT :limit OFFSET :offset`;
 
   // Use sequelize instance to run the queries
-  const [[{ total }]] = await sequelize.query(countQuery, { replacements: merged, type: sequelize.QueryTypes.SELECT });
-  const [rows] = await sequelize.query(dataQuery, { replacements: merged, type: sequelize.QueryTypes.SELECT });
+  const [[countResult]] = await sequelize.query(countQuery, { 
+    replacements: merged
+  }) as [[{ total: number }], unknown];
+  
+  const [rows] = await sequelize.query(dataQuery, { 
+    replacements: merged
+  }) as [T[], unknown];
 
-  const totalNum = parseInt(total, 10) || 0;
+  const totalNum = parseInt(String(countResult.total), 10) || 0;
   const totalPages = Math.max(1, Math.ceil(totalNum / size));
 
   return {

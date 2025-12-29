@@ -1,3 +1,11 @@
+/**
+ * Rate limiter configuration para API endpoints.
+ * Protege contra ataques de fuerza bruta y DoS.
+ * 
+ * @module middlewares/rate-limit.handler
+ */
+
+import type { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import env from '../environments/index.js';
 import logger from '../utils/logger.js';
@@ -10,14 +18,14 @@ import logger from '../utils/logger.js';
  * - Development: More permissive (200 requests per 15 minutes)
  * - Production: Stricter (100 requests per 15 minutes)
  */
-const limiter = rateLimit({
+export const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: env.execution === 'production' ? 100 : 200, // Limit per IP
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   
   // Custom handler for rate limit exceeded
-  handler: (req, res) => {
+  handler: (req: Request, res: Response): void => {
     logger.warn('Rate limit exceeded', {
       ip: req.ip,
       path: req.path,
@@ -27,12 +35,12 @@ const limiter = rateLimit({
     res.status(429).json({
       error: 'Too Many Requests',
       message: 'You have exceeded the rate limit. Please try again later.',
-      retryAfter: req.rateLimit?.resetTime || 'unknown'
+      retryAfter: (req as any).rateLimit?.resetTime || 'unknown'
     });
   },
   
   // Skip rate limiting for certain conditions
-  skip: (req) => {
+  skip: (req: Request): boolean => {
     // Skip for health check endpoint
     if (req.path === '/health') return true;
     // Skip in test environment
@@ -45,14 +53,13 @@ const limiter = rateLimit({
  * Stricter rate limiter for authentication endpoints.
  * Protects against credential stuffing and brute-force attacks.
  */
-const authLimiter = rateLimit({
+export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Only 5 failed attempts per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // Only count failed requests
   
-  handler: (req, res) => {
+  handler: (req: Request, res: Response): void => {
     logger.warn('Auth rate limit exceeded', {
       ip: req.ip,
       path: req.path
@@ -60,11 +67,14 @@ const authLimiter = rateLimit({
     
     res.status(429).json({
       error: 'Too Many Authentication Attempts',
-      message: 'Account temporarily locked. Please try again later.',
-      retryAfter: req.rateLimit?.resetTime || 'unknown'
+      message: 'Too many authentication attempts. Please try again later.',
+      retryAfter: (req as any).rateLimit?.resetTime || 'unknown'
     });
+  },
+  
+  skip: (_req: Request): boolean => {
+    return env.execution === 'test';
   }
 });
 
-export { limiter, authLimiter };
-export default limiter;
+export default { limiter, authLimiter };

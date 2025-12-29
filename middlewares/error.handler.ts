@@ -1,12 +1,26 @@
+/**
+ * Middlewares de manejo de errores
+ * 
+ * @module middlewares/error.handler
+ */
+
+import type { Request, Response, NextFunction, ErrorRequestHandler, RequestHandler } from 'express';
 import '../instrument.js';
 import env from '../environments/index.js';
 import * as Sentry from '@sentry/node';
+import logger from '../utils/logger.js';
 
-function errorNotFound(req, res, next) {
+/**
+ * Middleware para rutas no encontradas (404)
+ */
+export const errorNotFound: RequestHandler = (_req: Request, res: Response, _next: NextFunction): void => {
   res.status(404).json({ error: 'The requested route was not found' });
-}
+};
 
-function errorLog(err, req, res, next) {
+/**
+ * Middleware para logging de errores
+ */
+export const errorLog: ErrorRequestHandler = (err: any, req: Request, _res: Response, next: NextFunction): void => {
   // Structured logging
   const errorContext = {
     timestamp: new Date().toISOString(),
@@ -20,20 +34,19 @@ function errorLog(err, req, res, next) {
   };
 
   if (env.execution === 'development') {
-    import('../utils/logger.js').then(({ default: logger }) => {
-      logger.error('Request error', { ...errorContext, stack: err.stack });
-    });
+    logger.error('Request error', { ...errorContext, stack: err.stack });
   } else {
     // In production, log without stack trace
-    import('../utils/logger.js').then(({ default: logger }) => {
-      logger.error('Request error', errorContext);
-    });
+    logger.error('Request error', errorContext);
   }
 
   next(err);
-}
+};
 
-function errorHandler(err, req, res, next) {
+/**
+ * Middleware principal de manejo de errores
+ */
+export const errorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, _next: NextFunction): void => {
   // Determine status code
   const statusCode = err.statusCode || err.status || 500;
   
@@ -51,7 +64,7 @@ function errorHandler(err, req, res, next) {
   }
 
   // Prepare safe error response
-  const errorResponse = {
+  const errorResponse: any = {
     error: statusCode >= 500 ? 'Internal Server Error' : err.name || 'Error',
     message: statusCode >= 500 
       ? 'An unexpected error occurred' // Generic message for 5xx
@@ -68,15 +81,16 @@ function errorHandler(err, req, res, next) {
   }
 
   res.status(statusCode).json(errorResponse);
-}
+};
 
-function errorBoom(err, req, res, next) {
+/**
+ * Middleware para errores de Boom
+ */
+export const errorBoom: ErrorRequestHandler = (err: any, _req: Request, res: Response, next: NextFunction): void => {
   if (err.isBoom) {
     const { output } = err;
     res.status(output.statusCode).json(output.payload);
   } else {
     next(err);
   }
-}
-
-export { errorNotFound, errorLog, errorHandler, errorBoom };
+};

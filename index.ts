@@ -1,6 +1,15 @@
+/**
+ * Archivo principal de la aplicación NEEC Backend
+ * Configura Express, middlewares, rutas y conexión a base de datos
+ * 
+ * @module index
+ */
+
 import 'dotenv/config';
 import * as Sentry from '@sentry/node';
 import './instrument.js';
+import type { Request, Response, NextFunction } from 'express';
+import type { CorsCallback } from './types/index.js';
 import { auth } from 'express-oauth2-jwt-bearer';
 import { errorLog, errorHandler, errorBoom, errorNotFound } from './middlewares/error.handler.js';
 import { asyncHandler } from './middlewares/async.handler.js';
@@ -22,7 +31,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Validación de variables de entorno críticas
-const requiredEnvVars = {
+const requiredEnvVars: Record<string, string | undefined> = {
   'NODE_ENV': process.env.NODE_ENV
 };
 
@@ -34,7 +43,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 const missingVars = Object.entries(requiredEnvVars)
-  .filter(([key, value]) => !value)
+  .filter(([, value]) => !value)
   .map(([key]) => key);
 
 if (missingVars.length > 0) {
@@ -45,13 +54,18 @@ if (missingVars.length > 0) {
 
 // Validar valores de NODE_ENV
 const validEnvs = ['development', 'production', 'test'];
-if (!validEnvs.includes(process.env.NODE_ENV)) {
-  logger.warn('NODE_ENV is not standard', { current: process.env.NODE_ENV, expected: validEnvs });
+if (!validEnvs.includes(process.env.NODE_ENV!)) {
+  logger.warn('NODE_ENV is not standard', { 
+    current: process.env.NODE_ENV, 
+    expected: validEnvs 
+  });
 }
 
 const app = express();
+
+// CORS configuration
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin: function (origin: string | undefined, callback: CorsCallback) {
     // Allow requests with no origin (like mobile apps, curl, Postman) in development
     if (!origin && env.execution === 'development') {
       return callback(null, true);
@@ -62,11 +76,11 @@ const corsOptions = {
       callback(new Error(`Not allowed by CORS from ${origin}`));
     }
   }
-}
+};
 
 // Swagger UI for docs (protected)
-let swaggerUi;
-let YAML;
+let swaggerUi: any;
+let YAML: any;
 try {
   const swaggerModule = await import('swagger-ui-express');
   swaggerUi = swaggerModule.default;
@@ -77,6 +91,7 @@ try {
   swaggerUi = null;
 }
 
+// OAuth middleware configuration
 if (env.oauth) {
   if (process.env.AUDIENCE && process.env.ISSUER_BASE_URL) {
     try {
@@ -87,7 +102,8 @@ if (env.oauth) {
       app.use(jwtCheck);
       logger.info('OAuth middleware initialized successfully');
     } catch (error) {
-      logger.error('Error initializing OAuth middleware', { error: error.message });
+      const err = error as Error;
+      logger.error('Error initializing OAuth middleware', { error: err.message });
     }
   } else {
     logger.error('OAuth enabled but AUDIENCE or ISSUER_BASE_URL missing');
@@ -103,7 +119,7 @@ app.use(express.json({ limit: env.bodyLimit }));
 
 // Enable response compression
 app.use(compression({
-  filter: (req, res) => {
+  filter: (req: Request, res: Response) => {
     if (req.headers['x-no-compression']) return false;
     return compression.filter(req, res);
   },
@@ -137,11 +153,11 @@ app.use(perfTimeout);
 // *** CONFIGURE ROUTES AND MIDDLEWARES ***
 if (env.execution === 'development' || env.execution === 'production') {
 
-  app.get('/', (req, res) => {
+  app.get('/', (_req: Request, res: Response) => {
     res.status(200).json({ message: 'Welcome to Neec backend server' });
   });
 
-  app.get('/health', asyncHandler(async (req, res) => {
+  app.get('/health', asyncHandler(async (_req: Request, res: Response) => {
     let dbStatus = 'disconnected';
     let dbOk = false;
     
@@ -150,7 +166,8 @@ if (env.execution === 'development' || env.execution === 'production') {
       dbStatus = 'connected';
       dbOk = true;
     } catch (error) {
-      logger.error('Health check: database connection failed', { error: error.message });
+      const err = error as Error;
+      logger.error('Health check: database connection failed', { error: err.message });
     }
     
     const healthData = {
@@ -166,13 +183,11 @@ if (env.execution === 'development' || env.execution === 'production') {
     res.status(dbOk ? 200 : 503).json(healthData);
   }));
 
-  app.get('/api', (req, res) => {
-    res.status(200).json(
-      {
-        app: 'Neec Backend API',
-        lastVersion: '1.0.0',
-      }
-    );
+  app.get('/api', (_req: Request, res: Response) => {
+    res.status(200).json({
+      app: 'Neec Backend API',
+      lastVersion: '1.0.0',
+    });
   });
 
   // Mount /docs only if swagger-ui-express is available and the spec file exists
@@ -182,10 +197,8 @@ if (env.execution === 'development' || env.execution === 'production') {
       const specRaw = fs.readFileSync(specPath, 'utf8');
       const spec = YAML.parse(specRaw);
 
-      // Protection middleware:
-      // - If execution === 'development' allow access
-      // - Otherwise require header X-DOCS-TOKEN === process.env.DOCS_TOKEN
-      function docsAuth(req, res, next) {
+      // Protection middleware for docs
+      function docsAuth(req: Request, res: Response, next: NextFunction): Response | void {
         if (env.execution === 'development') return next();
         const token = req.header('X-DOCS-TOKEN') || req.query.docsToken;
         if (env.docsToken && token === env.docsToken) return next();
@@ -196,7 +209,8 @@ if (env.execution === 'development' || env.execution === 'production') {
       logger.info('Docs available at /docs');
     }
   } catch (err) {
-    logger.warn('Could not mount /docs', { error: err.message });
+    const error = err as Error;
+    logger.warn('Could not mount /docs', { error: error.message });
   }
 
   // *** ROUTES ***
@@ -207,7 +221,8 @@ if (env.execution === 'development' || env.execution === 'production') {
       Sentry.setupExpressErrorHandler(app);
       logger.info('Sentry error handler initialized');
     } catch (error) {
-      logger.error('Error setting up Sentry error handler', { error: error.message });
+      const err = error as Error;
+      logger.error('Error setting up Sentry error handler', { error: err.message });
     }
   }
 
@@ -219,7 +234,7 @@ if (env.execution === 'development' || env.execution === 'production') {
   app.use(errorHandler);
 
 } else {
-  app.get('*', (req, res) => {
+  app.get('*', (_req: Request, res: Response) => {
     return res.status(500).json({ message: 'I don\'t have a defined execution environment'});
   });
 }
@@ -249,7 +264,10 @@ if (env.execution === 'development' || env.execution === 'production') {
     });
 
   } catch (err) {
-    logger.error('Error al iniciar el servidor', { error: err.message });
+    const error = err as Error;
+    logger.error('Error al iniciar el servidor', { error: error.message });
     process.exit(1);
   }
 })();
+
+export { app };
