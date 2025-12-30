@@ -1,6 +1,8 @@
 /**
- * Repositorio base con operaciones CRUD comunes
- * Implementa el patrón Repository con TypeORM
+ * [ES] Repositorio base con operaciones CRUD comunes
+ * [EN] Base repository with common CRUD operations
+ * [ES] Implementa el patrón Repository con TypeORM
+ * [EN] Implements Repository pattern with TypeORM
  * 
  * @module repositories/base.repository
  */
@@ -11,22 +13,25 @@ import boom from '@hapi/boom';
 import logger from '../utils/logger.js';
 
 /**
- * Repositorio base genérico con operaciones CRUD estándar.
- * Proporciona métodos comunes para todas las entidades.
+ * [ES] Repositorio base genérico con operaciones CRUD estándar
+ * [EN] Generic base repository with standard CRUD operations
+ * [ES] Proporciona métodos comunes para todas las entidades
+ * [EN] Provides common methods for all entities
  * 
- * @template T - Tipo de la entidad que extiende BaseEntity
+ * @template T - [ES] Tipo de la entidad que extiende BaseEntity / [EN] Entity type that extends BaseEntity
  */
 export abstract class BaseRepository<T extends BaseEntity> {
   /**
-   * @param repository - Repositorio de TypeORM para la entidad
+   * @param {Repository<T>} repository - [ES] Repositorio de TypeORM para la entidad / [EN] TypeORM repository for the entity
    */
   constructor(protected readonly repository: Repository<T>) {}
 
   /**
-   * Encuentra todos los registros activos (recordStatus = true)
+   * [ES] Encuentra todos los registros activos (recordStatus = true)
+   * [EN] Finds all active records (recordStatus = true)
    * 
-   * @param options - Opciones de búsqueda de TypeORM
-   * @returns Promise con array de entidades
+   * @param {FindManyOptions<T>} options - [ES] Opciones de búsqueda de TypeORM / [EN] TypeORM find options
+   * @returns {Promise<T[]>} [ES] Promise con array de entidades / [EN] Promise with array of entities
    */
   async findAll(options?: FindManyOptions<T>): Promise<T[]> {
     try {
@@ -39,19 +44,20 @@ export abstract class BaseRepository<T extends BaseEntity> {
       });
     } catch (error) {
       const err = error as Error;
-      logger.error('Error finding all records', {
+      logger.error('[ES] Error encontrando todos los registros / [EN] Error finding all records', {
         entity: this.repository.metadata.tableName,
         error: err.message,
       });
-      throw boom.internal('Database query failed');
+      throw boom.internal('[ES] Consulta de base de datos fallida / [EN] Database query failed');
     }
   }
 
   /**
-   * Encuentra un registro por ID
+   * [ES] Encuentra un registro por ID
+   * [EN] Finds a record by ID
    * 
-   * @param id - ID del registro
-   * @returns Promise con la entidad encontrada o null
+   * @param {number} id - [ES] ID del registro / [EN] Record ID
+   * @returns {Promise<T | null>} [ES] Promise con la entidad encontrada o null / [EN] Promise with found entity or null
    */
   async findById(id: number): Promise<T | null> {
     try {
@@ -63,20 +69,21 @@ export abstract class BaseRepository<T extends BaseEntity> {
       });
     } catch (error) {
       const err = error as Error;
-      logger.error('Error finding record by ID', {
+      logger.error('[ES] Error encontrando registro por ID / [EN] Error finding record by ID', {
         entity: this.repository.metadata.tableName,
         id,
         error: err.message,
       });
-      throw boom.internal('Database query failed');
+      throw boom.internal('[ES] Consulta de base de datos fallida / [EN] Database query failed');
     }
   }
 
   /**
-   * Encuentra un registro por condiciones
+   * [ES] Encuentra un registro por condiciones
+   * [EN] Finds a record by conditions
    * 
-   * @param where - Condiciones de búsqueda
-   * @returns Promise con la entidad encontrada o null
+   * @param {FindOptionsWhere<T>} where - [ES] Condiciones de búsqueda / [EN] Search conditions
+   * @returns {Promise<T | null>} [ES] Promise con la entidad encontrada o null / [EN] Promise with found entity or null
    */
   async findOne(where: FindOptionsWhere<T>): Promise<T | null> {
     try {
@@ -88,16 +95,17 @@ export abstract class BaseRepository<T extends BaseEntity> {
       });
     } catch (error) {
       const err = error as Error;
-      logger.error('Error finding one record', {
+      logger.error('[ES] Error encontrando un registro / [EN] Error finding one record', {
         entity: this.repository.metadata.tableName,
         error: err.message,
       });
-      throw boom.internal('Database query failed');
+      throw boom.internal('[ES] Consulta de base de datos fallida / [EN] Database query failed');
     }
   }
 
   /**
-   * Crea un nuevo registro
+   * [ES] Crea un nuevo registro
+   * [EN] Creates a new record
    * 
    * @param data - Datos de la entidad a crear
    * @returns Promise con la entidad creada

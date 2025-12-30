@@ -1,5 +1,6 @@
 /**
- * Async handler wrapper que captura errores automáticamente.
+ * [ES] Async handler wrapper que captura errores automáticamente
+ * [EN] Async handler wrapper that catches errors automatically
  * 
  * @module middlewares/async.handler
  */
@@ -9,7 +10,8 @@ import boom from '@hapi/boom';
 import logger from '../utils/logger.js';
 
 /**
- * Tipo para handlers asíncronos
+ * [ES] Tipo para handlers asíncronos
+ * [EN] Type for async handlers
  */
 type AsyncRequestHandler = (
   req: Request,
@@ -18,11 +20,13 @@ type AsyncRequestHandler = (
 ) => Promise<unknown>;
 
 /**
- * Async handler wrapper que captura errores automáticamente.
- * Elimina la necesidad de try-catch en cada ruta.
+ * [ES] Async handler wrapper que captura errores automáticamente
+ * [EN] Async handler wrapper that automatically catches errors
+ * [ES] Elimina la necesidad de try-catch en cada ruta
+ * [EN] Eliminates the need for try-catch in each route
  * 
- * @param fn - Función async del handler
- * @returns Middleware wrapper con manejo de errores
+ * @param {AsyncRequestHandler} fn - [ES] Función async del handler / [EN] Async handler function
+ * @returns {RequestHandler} [ES] Middleware wrapper con manejo de errores / [EN] Middleware wrapper with error handling
  * 
  * @example
  * router.get('/', asyncHandler(async (req, res) => {
@@ -33,21 +37,24 @@ type AsyncRequestHandler = (
 export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch((error: unknown) => {
-      // Si el error ya es un Boom error, pasarlo directamente
+      // [ES] Si el error ya es un Boom error, pasarlo directamente
+      // [EN] If error is already a Boom error, pass it directly
       if (boom.isBoom(error)) {
         return next(error);
       }
       
-      // Para otros errores, crear un Boom error interno con contexto
+      // [ES] Para otros errores, crear un Boom error interno con contexto
+      // [EN] For other errors, create an internal Boom error with context
       const err = error as Error;
-      logger.error('Unhandled error in async handler', {
+      logger.error('[ES] Error no controlado en async handler / [EN] Unhandled error in async handler', {
         message: err.message,
         stack: err.stack,
         path: req.path,
         method: req.method
       });
       
-      // En desarrollo, incluir más detalles del error
+      // [ES] En desarrollo, incluir más detalles del error
+      // [EN] In development, include more error details
       const isDev = process.env.NODE_ENV === 'development';
       const errorMessage = isDev 
         ? `Unexpected error: ${err.message}` 

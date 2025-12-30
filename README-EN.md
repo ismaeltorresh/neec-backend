@@ -1,6 +1,6 @@
 # NEEC Backend
 
-> REST API Backend built with Node.js, Express.js, TypeScript, Zod and TypeORM over MariaDB/MySQL
+> Enterprise REST API built with Node.js, Express, TypeScript, Zod and TypeORM on MariaDB
 
 **🇬🇧 English Version** | **[🇪🇸 Versión en Español](README.md)**
 
@@ -9,234 +9,814 @@
 [![TypeORM](https://img.shields.io/badge/TypeORM-0.3+-E83524?logo=typeorm&logoColor=white)](https://typeorm.io/)
 [![Zod](https://img.shields.io/badge/Zod-3.22+-3E67B1?logo=zod&logoColor=white)](https://zod.dev/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.19-000000?logo=express&logoColor=white)](https://expressjs.com/)
-[![Tests](https://img.shields.io/badge/Tests-Passing-success?logo=jest)](https://jestjs.io/)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 
 ---
 
 ## 📋 Table of Contents
 
-- [Description](#-description)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Scripts](#-scripts)
-- [Project Structure](#-project-structure)
-- [API Usage](#-api-usage)
-- [Validation System (Zod)](#-validation-system-zod)
-- [TypeORM and Migrations](#-typeorm-and-migrations)
-- [Testing](#-testing)
-- [Security](#-security)
-- [CI/CD](#-cicd)
-- [Additional Documentation](#-additional-documentation)
+- [🚀 Quick Start](#-quick-start)
+- [🤖 Automation Scripts](#-automation-scripts)
+- [📖 What is NEEC Backend?](#-what-is-neec-backend)
+- [🏗️ Architecture](#-architecture)
+- [🛠️ Tech Stack](#-tech-stack)
+- [⚙️ Complete Installation](#-complete-installation)
+- [📜 Commands and Scripts](#-commands-and-scripts)
+- [📁 Project Structure](#-project-structure)
+- [🔧 Validation System (Zod)](#-validation-system-zod)
+- [🗄️ TypeORM and Database](#-typeorm-and-database)
+- [🧪 Testing](#-testing)
+- [🔒 Security](#-security)
+- [📚 Additional Documentation](#-additional-documentation)
 
 ---
 
-## 📖 Description
+## 🚀 Quick Start
 
-**NEEC Backend** is an enterprise REST API built with layered architecture following SOLID principles, Domain-Driven Design (DDD) and security best practices (OWASP, NIST).
+**First time with the project? Just 3 steps:**
+
+```bash
+# 1️⃣ Install dependencies
+npm install
+
+# 2️⃣ Configure environment variables
+cp .env.example .env
+# Edit .env with your database credentials
+
+# 3️⃣ Start in development mode
+npm run dev
+```
+
+**✅ Done!** Your server is running at `http://localhost:8008`
+
+---
+
+## 🤖 Automation Scripts
+
+### 🎯 Why are they important?
+
+Automation scripts are the **most powerful tool** in this project. They allow you to create complete endpoints in seconds, eliminating repetitive work and ensuring consistency across all code.
+
+### 1. Complete Endpoint Generator
+
+**Generates all the necessary structure for a new endpoint with a single command.**
+
+#### What does it generate automatically?
+
+| File | Description | Location |
+|------|-------------|----------|
+| 🛣️ **Route** | Controller with complete CRUD (GET, POST, PATCH, DELETE) | `routes/name.routes.ts` |
+| ✅ **Schema** | Zod validations with automatic types | `schemas/name.schema.ts` |
+| 📝 **Interface** | TypeScript types for DTOs | `interfaces/name.interface.ts` |
+| 🗃️ **Entity** | Database model with TypeORM decorators | `entities/name.entity.ts` |
+| 💾 **Repository** | Data access layer with CRUD methods | `repositories/name.repository.ts` |
+| 📊 **SQL Script** | Complete script to create the table in DB | `db/sql/create-name-table.sql` |
+
+**Bonus:** It also automatically updates `routes/index.ts` to register the endpoint.
+
+#### Basic Command
+
+```bash
+npm run generate <name> y
+```
+
+#### 📦 Example 1: Create "Products" endpoint
+
+```bash
+npm run generate product y
+```
+
+**Result:**
+
+```
+✅ Generating files for: product
+
+📁 Files created:
+  ✓ routes/product.routes.ts
+  ✓ schemas/product.schema.ts  
+  ✓ interfaces/product.interface.ts
+  ✓ entities/product.entity.ts
+  ✓ repositories/product.repository.ts
+  ✓ db/sql/create-product-table.sql
+
+📝 routes/index.ts automatically updated
+
+🎉 Endpoint ready!
+```
+
+**Generated code (preview):**
+
+```typescript
+// routes/product.routes.ts - Controller with complete CRUD
+import { Router } from 'express';
+import type { Request, Response } from 'express';
+import { asyncHandler } from '../middlewares/async.handler.js';
+import { validatorHandler } from '../middlewares/validator.handler.js';
+import { createProductSchema, updateProductSchema } from '../schemas/product.schema.js';
+import { ProductRepository } from '../repositories/product.repository.js';
+
+const router = Router();
+const productRepository = new ProductRepository();
+
+// GET /api/v1/products - List all
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  const products = await productRepository.findAll();
+  res.json(products);
+}));
+
+// POST /api/v1/products - Create new
+router.post('/', 
+  validatorHandler(createProductSchema, 'body'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const product = await productRepository.create(req.body);
+    res.status(201).json(product);
+  })
+);
+
+// PATCH /api/v1/products/:id - Update
+router.patch('/:id',
+  validatorHandler(updateProductSchema, 'body'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const product = await productRepository.update(parseInt(req.params.id), req.body);
+    res.json(product);
+  })
+);
+
+// DELETE /api/v1/products/:id - Delete (soft delete)
+router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+  await productRepository.delete(parseInt(req.params.id));
+  res.status(204).send();
+}));
+
+export default router;
+```
+
+```typescript
+// schemas/product.schema.ts - Validation with Zod
+import { z } from 'zod';
+
+export const createProductSchema = z.object({
+  name: z.string()
+    .min(1, '[ES] El nombre es obligatorio / [EN] Name is required')
+    .max(255, '[ES] Máximo 255 caracteres / [EN] Maximum 255 characters'),
+  description: z.string().optional(),
+  price: z.coerce.number()
+    .positive('[ES] El precio debe ser positivo / [EN] Price must be positive'),
+  stock: z.coerce.number()
+    .int()
+    .nonnegative()
+    .optional(),
+  recordStatus: z.boolean().default(true),
+});
+
+export const updateProductSchema = createProductSchema.partial();
+
+// [ES] Tipos automáticos inferidos desde Zod
+// [EN] Automatic types inferred from Zod
+export type CreateProductDto = z.infer<typeof createProductSchema>;
+export type UpdateProductDto = z.infer<typeof updateProductSchema>;
+```
+
+```typescript
+// entities/product.entity.ts - TypeORM Model
+import { Entity, Column } from 'typeorm';
+import { BaseEntity } from './base.entity.js';
+
+@Entity('products')
+export class Product extends BaseEntity {
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
+
+  @Column({ type: 'text', nullable: true })
+  description?: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  price!: number;
+
+  @Column({ type: 'int', default: 0 })
+  stock!: number;
+}
+```
+
+**APIs automatically available:**
+
+```http
+GET    /api/v1/products          # List all products
+GET    /api/v1/products/:id      # Get one product
+POST   /api/v1/products          # Create product
+PATCH  /api/v1/products/:id      # Update product
+DELETE /api/v1/products/:id      # Delete (soft delete)
+```
+
+#### 👤 Example 2: Create "Users" endpoint
+
+```bash
+npm run generate user y
+```
+
+Generates:
+- `routes/user.routes.ts`
+- `schemas/user.schema.ts`
+- `interfaces/user.interface.ts`
+- `entities/user.entity.ts`
+- `repositories/user.repository.ts`
+- `db/sql/create-user-table.sql`
+- URLs: `/api/v1/users`, `/api/v1/users/:id`, etc.
+
+#### 🛒 Example 3: Endpoint with compound name
+
+```bash
+npm run generate product-category y
+```
+
+Generates:
+- Files with name: `product-category.*`
+- Classes with name: `ProductCategory`
+- URLs: `/api/v1/product-categories`
+
+---
+
+### 💡 How does the generator work internally?
+
+**Step by step:**
+
+1. **Reads the name:** Example "product"
+   
+2. **Converts formats:**
+   - `PascalCase`: `Product` → For class names
+   - `camelCase`: `product` → For variables
+   - `kebab-case`: `product` → For file names
+   - `plural`: `products` → For API URLs
+
+3. **Generates from templates:**
+   - Reads predefined templates
+   - Replaces `{{placeholder}}` with real values
+   - Applies TypeScript formatting
+
+4. **Registers automatically:**
+   - Updates `routes/index.ts`
+   - Adds the import and route
+
+---
+
+### ⚠️ Steps after generating
+
+1. **Run the generated SQL:**
+   ```bash
+   mysql -u root -p neec_dev < db/sql/create-product-table.sql
+   ```
+
+2. **Customize fields** (optional):
+   
+   **Add custom validations:**
+   ```typescript
+   // schemas/product.schema.ts
+   export const createProductSchema = z.object({
+     name: z.string().min(3).max(255),
+     sku: z.string().regex(/^[A-Z0-9-]+$/), // ← New validation
+     price: z.coerce.number().positive(),
+     category: z.enum(['electronics', 'clothing', 'food']), // ← New validation
+   });
+   ```
+
+   **Add columns to entity:**
+   ```typescript
+   // entities/product.entity.ts
+   @Entity('products')
+   export class Product extends BaseEntity {
+     @Column()
+     name!: string;
+
+     @Column({ unique: true }) // ← New column
+     sku!: string;
+
+     @Column({ type: 'enum', enum: ['electronics', 'clothing', 'food'] }) // ← New column
+     category!: string;
+   }
+   ```
+
+3. **Restart the server:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Test your endpoint:**
+   ```bash
+   # Create product
+   curl -X POST http://localhost:8008/api/v1/products \
+     -H "Content-Type: application/json" \
+     -d '{"name": "Laptop", "price": 999.99, "stock": 10}'
+
+   # List products
+   curl http://localhost:8008/api/v1/products
+   ```
+
+---
+
+### 📚 Additional generator documentation
+
+For more details about the generator and its advanced options, see:
+
+- **[scripts/README.md](scripts/README.md)** - Complete generator documentation
+- **[scripts/QUICKSTART.md](scripts/QUICKSTART.md)** - Quick guide with examples
+
+---
+
+## 📖 What is NEEC Backend?
+
+**NEEC Backend** is an enterprise REST API designed with Node.js and TypeScript best practices.
+
+### 🎯 Project Goals
+
+- **🔒 Secure**: OAuth 2.0, Helmet, Rate Limiting, strict validation
+- **📏 Scalable**: Layered architecture, TypeORM with pooling, separation of concerns
+- **✅ Reliable**: Automated tests, CI/CD, TypeScript strict mode
+- **🚀 Productive**: Automatic generators, hot-reload, OpenAPI documentation
+- **🌍 Global**: Bilingual documentation (Spanish/English)
 
 ### ✨ Key Features
 
-- ✅ **TypeScript Strict Mode** - Compile-time type safety
-- ✅ **TypeORM** - TypeScript-first ORM with decorators, versioned migrations and Repository Pattern
-- ✅ **Zod** - Validation with automatic type inference (Single Source of Truth)
-- ✅ **Layered Architecture** - Routes → Services → Repositories → Database
-- ✅ **Async Error Handling** - Middlewares `asyncHandler`, `withTimeout`, `withRetry`
-- ✅ **Structured Logging** - Centralized system with 6 levels (info, warn, error, debug, db, perf)
-- ✅ **OAuth 2.0** - Auth0 integration (JWT Bearer tokens)
-- ✅ **Rate Limiting** - Protection against brute-force and DoS
-- ✅ **Security Hardening** - Helmet, CORS, input sanitization
-- ✅ **CI/CD** - GitHub Actions with automated build, tests and deploy
+| Feature | Description |
+|---------|-------------|
+| **TypeScript 5.0+** | Compile-time type safety with strict mode |
+| **Zod Validation** | Schemas with automatic type inference (Single Source of Truth) |
+| **TypeORM 0.3+** | Modern ORM with decorators, migrations and Query Builder |
+| **OAuth 2.0** | Secure authentication with Auth0 (JWT Bearer tokens) |
+| **Rate Limiting** | Protection against brute-force and abuse |
+| **Jest Testing** | Unit and integration tests |
+| **OpenTelemetry** | Observability and request tracing |
+| **CI/CD** | Automated pipeline with GitHub Actions |
+| **Bilingual Documentation** | Code commented in Spanish and English with JSDoc |
 
 ---
 
 ## 🏗️ Architecture
 
-Layered architecture with strict separation of concerns:
+### Layered Architecture
+
+Strict separation of concerns following SOLID principles:
 
 ```
 ┌─────────────────────────────────────────┐
-│      HTTP Layer (Express.js)            │
-│  Middlewares: Auth, CORS, Helmet,       │
-│  Rate Limit, Error Handler              │
+│       HTTP Layer (Express)              │
+│  • CORS, Helmet, Rate Limiting          │
+│  • OAuth 2.0 Middleware                 │
+│  • Body Parser, Compression             │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│      Routes/Controllers Layer           │
-│  • HTTP req/res handling                │
-│  • Zod validation                       │
-│  • Service orchestration                │
+│     Routes Layer (Controllers)          │
+│  • Request/Response handling            │
+│  • Zod validation middleware            │
 │  • HTTP status codes                    │
+│  • Error boundaries (asyncHandler)      │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│         Services Layer                  │
-│  • Business logic                       │
+│      Service Layer (Business Logic)     │
+│  • Pure business logic                  │
 │  • Transaction orchestration            │
 │  • Error handling (Boom)                │
 │  • Cross-repository operations          │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│      Repository Layer                   │
+│      Repository Layer (Data Access)     │
 │  • TypeORM repositories                 │
 │  • Data access abstraction              │
 │  • Query building                       │
+│  • Database connection pooling          │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│      Entities Layer (TypeORM)           │
+│     Entities Layer (TypeORM Models)     │
 │  • Database models (decorators)         │
-│  • Relations                            │
+│  • Relations (OneToMany, ManyToOne)     │
 │  • Lifecycle hooks                      │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│         Database (MariaDB)              │
+│         Database (MariaDB/MySQL)        │
 └─────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
 ```
-Request → Middleware → Controller → Zod Validation → Service → Repository → TypeORM → Database
-                                                                                        ↓
-Response ← Middleware ← Controller ← Service ← Repository ← TypeORM Entity ← Database
+[Request] → Middleware → Controller → Zod Validation → Service → Repository → TypeORM → Database
+                                                                                              ↓
+[Response] ← Middleware ← Controller ← Service ← Repository ← TypeORM Entity ← Database
 ```
+
+### Design Principles
+
+1. **Separation of Concerns**: Each layer has a single responsibility
+2. **Dependency Injection**: Repositories injected into services
+3. **Single Source of Truth**: Zod schemas → TypeScript types
+4. **Fail Fast**: Early validation in controllers
+5. **Error Boundaries**: asyncHandler catches async errors
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Core
-- **Node.js** v20 LTS
-- **TypeScript** 5.0+ (strict mode, ES2022 target)
-- **Express.js** 4.19
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Node.js** | v20 LTS | JavaScript runtime |
+| **TypeScript** | 5.0+ | Type safety, strict mode |
+| **Express.js** | 4.19 | HTTP web framework |
 
 ### Database
-- **TypeORM** 0.3+ (decorators, migrations, Query Builder)
-- **mysql2** (driver for MariaDB/MySQL)
-- **MariaDB** 10.x / **MySQL** 8.x
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **TypeORM** | 0.3+ | ORM with decorators and migrations |
+| **mysql2** | Latest | Driver for MariaDB/MySQL |
+| **MariaDB** / **MySQL** | 10.x / 8.x | Relational database |
 
 ### Validation and Types
-- **Zod** 3.22 - Validation + type inference
-- **@hapi/boom** 10.0 - Typed HTTP errors
+
+| Technology | Purpose |
+|------------|---------|
+| **Zod** 3.22 | Validation + automatic type inference |
+| **@hapi/boom** 10.0 | Structured and typed HTTP errors |
 
 ### Security
-- **Helmet** 8.0 - Security headers
-- **express-rate-limit** 7.x - Rate limiting
-- **express-oauth2-jwt-bearer** - Auth0 integration
+
+| Technology | Purpose |
+|------------|---------|
+| **Helmet** 8.0 | HTTP security headers |
+| **express-rate-limit** 7.x | Rate limiting per IP |
+| **express-oauth2-jwt-bearer** | Auth0 OAuth 2.0 integration |
 
 ### Testing and Development
-- **Jest** 29.7 + **ts-jest**
-- **Nodemon** 3.1 + **ts-node**
-- **ESLint** 9.8
 
-### Monitoring
-- **Sentry** - APM and error tracking
+| Technology | Purpose |
+|------------|---------|
+| **Jest** 29.7 | Testing framework |
+| **ts-jest** | TypeScript preset for Jest |
+| **Nodemon** 3.1 | Hot-reload in development |
+| **ts-node** | Run TypeScript directly |
+| **ESLint** 9.8 | Linting and code style |
+
+### Observability
+
+| Technology | Purpose |
+|------------|---------|
+| **Sentry** | APM, error tracking and performance monitoring |
 
 ---
 
-## 🚀 Installation
+## ⚙️ Complete Installation
 
 ### Prerequisites
 
-- Node.js v20+
-- MariaDB 10.x or MySQL 8.x
-- npm v9+
+| Tool | Minimum Version | Verification Command |
+|------|----------------|----------------------|
+| **Node.js** | v20 LTS | `node --version` |
+| **npm** | v9+ | `npm --version` |
+| **MariaDB/MySQL** | 10.x / 8.x | `mysql --version` |
 
-### 1. Clone and Install
+### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/ismaeltorresh/neec-backend.git
 cd neec-backend
+```
+
+### Step 2: Install Dependencies
+
+```bash
 npm install
 ```
 
-### 2. Configure Environment Variables
+This will install:
+- TypeScript and ts-node
+- Express.js and middlewares (helmet, cors, rate-limit)
+- TypeORM and mysql2 driver
+- Zod for validation
+- Jest for testing
+- ESLint for linting
+- And all other dependencies
+
+### Step 3: Configure Environment Variables
 
 ```bash
+# Copy example file
 cp .env.example .env
+
+# Edit with your favorite editor
+nano .env  # or: code .env, vim .env
 ```
 
-Edit `.env`:
+**Critical variables to configure:**
 
 ```bash
-# Application
-NODE_ENV=development
-PORT=8008
+# 🌍 Application
+NODE_ENV=development        # development | testing | production
+PORT=8008                  # Server port
 
-# Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=neec_dev
+# 🗄️ Database
+DB_HOST=localhost          # Host
+DB_PORT=3306              # Port (3306 by default)
+DB_USER=root              # User
+DB_PASSWORD=your_password # ⚠️ Change to your real password
+DB_NAME=neec_dev          # Database name
 
-# OAuth 2.0 (Auth0)
+# 🔐 OAuth 2.0 (Auth0) - Optional to start
 AUDIENCE=https://api.loha.mx
 ISSUER_BASE_URL=https://dev-xxx.us.auth0.com/
 
-# Security
+# 🛡️ Security
 BODY_LIMIT=100kb
 DOCS_TOKEN=secret_token
 
-# Sentry (optional)
+# 📊 Monitoring (Optional)
 SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 SENTRY_TRACES_SAMPLE_RATE=0.05
 ```
 
-### 3. Create Database
+### Step 4: Create Database
+
+**Option A: Create manually (recommended)**
 
 ```bash
-# Option 1: Use SQL script (legacy)
-mysql -u root -p < db/database.sql
-
-# Option 2: Create manually
+# Connect to MySQL/MariaDB
 mysql -u root -p
+
+# In MySQL prompt:
 CREATE DATABASE neec_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+EXIT;
 ```
 
-### 4. Run Migrations
+**Option B: Use SQL script (legacy)**
 
 ```bash
-# Run all pending migrations
+mysql -u root -p < db/database.sql
+```
+
+### Step 5: Run Migrations (if any)
+
+```bash
+# View pending migrations
+npm run migration:show
+
+# Run migrations
 npm run migration:run
 ```
 
-### 5. Start Server
+### Step 6: Start Server
+
+**Development Mode (with hot-reload):**
 
 ```bash
-# Development (hot-reload)
 npm run dev
+```
 
-# Production
+**Production Mode:**
+
+```bash
+# Compile TypeScript to JavaScript
 npm run build
+
+# Start server with compiled code
 npm start
+```
+
+### ✅ Verify Installation
+
+If everything went well, you should see:
+
+```
+🚀 Server running on port 8008
+✅ Database connected successfully
+📝 Environment: development
+```
+
+Now you can access:
+- **API**: http://localhost:8008
+- **Health Check**: http://localhost:8008/health
+- **API Info**: http://localhost:8008/api
+
+---
+
+## 📜 Commands and Scripts
+
+### 🔥 Development
+
+```bash
+npm run dev          # Server with hot-reload (nodemon + ts-node)
+npm run type-check   # Verify TypeScript types without compiling
+npm run lint         # ESLint - check code quality
+```
+
+### 🤖 Generators
+
+```bash
+# Generate complete endpoint (6 files + SQL)
+npm run generate <name> y
+
+# Examples:
+npm run generate customer y          # Customer endpoint
+npm run generate product-review y    # Product reviews endpoint
+npm run generate shipping-address y  # Shipping addresses endpoint
+```
+
+### 🏗️ Compilation
+
+```bash
+npm run build        # Compile TypeScript → JavaScript in dist/
+npm start            # Run compiled code (production)
+```
+
+### 🗄️ Database (TypeORM)
+
+```bash
+npm run migration:show      # View migrations
+npm run migration:run       # Run pending migrations
+npm run migration:revert    # Revert last migration
+npm run migration:generate -- -n MigrationName  # Generate from entities
+npm run migration:create -- -n MigrationName    # Create empty migration
+```
+
+### 🧪 Testing
+
+```bash
+npm test             # Run all tests
+npm run test:watch   # Watch mode (re-runs on file changes)
+npm run test:coverage # Tests with coverage report
+```
+
+### 🔒 Security
+
+```bash
+npm run security:audit   # Security audit
+npm audit fix            # Fix vulnerabilities automatically
+```
+
+### 📚 Documentation
+
+```bash
+npm run docs         # OpenAPI/Swagger documentation server
 ```
 
 ---
 
-## ⚙️ Configuration
+## 📁 Project Structure
 
-### Environments
+```plaintext
+neec-backend/
+├── 📄 index.ts                    # [ES] Punto de entrada / [EN] Entry point
+├── 📄 instrument.ts               # [ES] Instrumentación Sentry / [EN] Sentry instrumentation
+├── 📄 tsconfig.json               # [ES] Config TypeScript / [EN] TypeScript config
+├── 📄 jest.config.js              # [ES] Config Jest / [EN] Jest configuration
+├── 📄 package.json                # [ES] Dependencias y scripts / [EN] Dependencies and scripts
+│
+├── 📁 db/                         # [ES] Base de datos / [EN] Database
+│   ├── connection.ts              # TypeORM DataSource + connection pooling
+│   ├── ormconfig.ts               # TypeORM CLI configuration
+│   └── sql/                       # Auto-generated SQL scripts
+│
+├── 📁 entities/                   # [ES] Modelos de BD / [EN] Database models
+│   ├── base.entity.ts             # Base entity with common fields
+│   ├── example.entity.ts          # Example entity
+│   └── README.md
+│
+├── 📁 schemas/                    # [ES] Validaciones Zod / [EN] Zod validations
+│   ├── example.schema.ts          # Validations with type inference
+│   └── template.schema.ts
+│
+├── 📁 interfaces/                 # [ES] Tipos TypeScript / [EN] TypeScript types
+│   ├── example.interface.ts       # DTOs and response types
+│   └── README.md
+│
+├── 📁 routes/                     # [ES] Controladores / [EN] Controllers
+│   ├── index.ts                   # Main router
+│   ├── example.routes.ts          # Complete CRUD
+│   └── template.routes.ts
+│
+├── 📁 repositories/               # [ES] Acceso a datos / [EN] Data access
+│   ├── base.repository.ts         # Generic repository with CRUD
+│   ├── example.repository.ts
+│   └── README.md
+│
+├── 📁 migrations/                 # [ES] Migraciones de BD / [EN] Database migrations
+│   ├── 1703851200000-CreateExampleTable.ts
+│   └── README.md
+│
+├── 📁 middlewares/                # [ES] Middleware Express / [EN] Express middleware
+│   ├── async.handler.ts           # asyncHandler, withTimeout, withRetry
+│   ├── error.handler.ts           # Global error handler
+│   ├── validator.handler.ts       # Zod validation
+│   ├── rate-limit.handler.ts      # Rate limiting
+│   └── perf.handler.ts            # Performance monitoring
+│
+├── 📁 utils/                      # [ES] Utilidades / [EN] Utilities
+│   ├── logger.ts                  # Structured logging system
+│   ├── validation.ts              # Custom validators
+│   ├── pagination.ts              # Pagination helpers
+│   └── response.ts                # HTTP response helpers
+│
+├── 📁 types/                      # [ES] Tipos globales / [EN] Global types
+│   └── index.ts                   # Shared interfaces
+│
+├── 📁 environments/               # [ES] Configuración por ambiente / [EN] Environment config
+│   ├── index.ts                   # Auto-load based on NODE_ENV
+│   ├── environments.development.ts
+│   ├── environments.production.ts
+│   └── environments.testing.ts
+│
+├── 📁 scripts/                    # [ES] Scripts de automatización / [EN] Automation scripts
+│   ├── generate-endpoint.js       # 🤖 Endpoint generator
+│   ├── security-audit.sh          # Security audit
+│   ├── README.md
+│   └── QUICKSTART.md
+│
+└── 📁 test/                       # [ES] Archivos de pruebas / [EN] Test files
+    ├── schema-sync.test.ts
+    └── fakedata.json
+```
 
-Configuration files in [`environments/`](environments/):
+### 💡 What does each folder do?
 
-- **`environments.development.ts`** - Local development
-- **`environments.production.ts`** - Production
-- **`environments.testing.ts`** - Tests
+| Folder | Responsibility | Key Files |
+|--------|----------------|-----------|
+| **routes/** | Handle HTTP requests and respond | `*.routes.ts` |
+| **schemas/** | Validate input data with Zod | `*.schema.ts` |
+| **entities/** | Define database models | `*.entity.ts` |
+| **repositories/** | Perform CRUD operations on DB | `*.repository.ts` |
+| **interfaces/** | Define TypeScript types | `*.interface.ts` |
+| **middlewares/** | Intercept and process requests | `*.handler.ts` |
+| **utils/** | Reusable utility functions | `logger.ts`, etc. |
+| **migrations/** | Version control for DB changes | Timestamp-*.ts |
 
-Automatic loading based on `NODE_ENV`.
+---
 
-### TypeORM DataSource
+## 🔧 Validation System (Zod)
 
-Configured in [`db/connection.ts`](db/connection.ts) and [`db/ormconfig.ts`](db/ormconfig.ts):
+### Why Zod?
+
+**Zod** is a **TypeScript-first** validation library that allows:
+
+1. **Single Source of Truth**: Define schema once, get types automatically
+2. **Runtime Validation**: Validate data at runtime
+3. **Type Safety**: TypeScript types inferred automatically
+4. **Error Messages**: Custom and descriptive error messages
+
+### Complete Example
+
+```typescript
+// schemas/product.schema.ts
+
+import { z } from 'zod';
+
+// [ES] Schema de validación / [EN] Validation schema
+export const createProductSchema = z.object({
+  name: z.string()
+    .min(3, '[ES] Mínimo 3 caracteres / [EN] Minimum 3 characters')
+    .max(255, '[ES] Máximo 255 caracteres / [EN] Maximum 255 characters'),
+  
+  sku: z.string()
+    .regex(/^[A-Z0-9-]+$/, '[ES] SKU inválido / [EN] Invalid SKU'),
+  
+  price: z.coerce.number()
+    .positive('[ES] El precio debe ser positivo / [EN] Price must be positive'),
+  
+  stock: z.coerce.number()
+    .int()
+    .nonnegative()
+    .default(0),
+  
+  category: z.enum(['electronics', 'clothing', 'food', 'other']),
+  
+  tags: z.array(z.string()).optional(),
+  
+  isActive: z.boolean().default(true),
+});
+
+// [ES] Schema para actualización (todos los campos opcionales)
+// [EN] Schema for update (all fields optional)
+export const updateProductSchema = createProductSchema.partial();
+
+// [ES] Tipos automáticos inferidos desde Zod - NO necesitas definirlos manualmente
+// [EN] Automatic types inferred from Zod - NO need to define them manually
+export type CreateProductDto = z.infer<typeof createProductSchema>;
+export type UpdateProductDto = z.infer<typeof updateProductSchema>;
+```
+
+---
+
+## 🗄️ TypeORM and Database
+
+### Configuration
 
 ```typescript
 // db/connection.ts
+
+import { DataSource } from 'typeorm';
+import { env } from '../environments/index.js';
+
 export const AppDataSource = new DataSource({
   type: 'mysql',
   host: env.dbHost,
@@ -244,533 +824,92 @@ export const AppDataSource = new DataSource({
   username: env.dbUser,
   password: env.dbPassword,
   database: env.dbName,
+  
+  // [ES] Entidades y migraciones / [EN] Entities and migrations
   entities: ['dist/entities/**/*.js'],
   migrations: ['dist/migrations/**/*.js'],
-  synchronize: false, // ⚠️ NEVER true in production
+  
+  // [ES] ⚠️ NUNCA true en producción / [EN] ⚠️ NEVER true in production
+  synchronize: false,
+  
+  // [ES] Logging en desarrollo / [EN] Logging in development
   logging: env.execution === 'development',
+  
+  // [ES] Pool de conexiones / [EN] Connection pooling
+  extra: {
+    connectionLimit: 10,
+    waitForConnections: true,
+    queueLimit: 0,
+  },
 });
 ```
-
----
-
-## 📜 Scripts
-
-### Development
-
-```bash
-npm run dev          # Server with hot-reload (TypeScript)
-npm run type-check   # Check types without compiling
-```
-
-### Build
-
-```bash
-npm run build        # Compile TS → JS in dist/
-```
-
-### Production
-
-```bash
-npm start            # Run compiled code
-```
-
-### Testing
-
-```bash
-npm test             # Jest (supports .ts and .js)
-npm run lint         # ESLint
-```
-
-### TypeORM (Migrations)
-
-```bash
-# Generate migration from entity changes
-npm run migration:generate -- migrations/CreateUserTable
-
-# Create empty migration
-npm run migration:create -- migrations/AddIndexToUsers
-
-# Run migrations
-npm run migration:run
-
-# Revert last migration
-npm run migration:revert
-
-# Show migration status
-npm run typeorm -- migration:show -d db/ormconfig.ts
-```
-
-### Security
-
-```bash
-npm run security:audit   # Security audit
-```
-
----
-
-## 📁 Project Structure
-
-```
-neec-backend/
-├── db/
-│   ├── connection.ts           # TypeORM DataSource
-│   ├── ormconfig.ts            # Config for CLI
-│   └── database.sql            # Legacy schema (reference)
-├── entities/                   # TypeORM entities
-│   ├── base.entity.ts          # Abstract base entity
-│   ├── example.entity.ts       # Example
-│   └── README.md
-├── repositories/               # Repository Pattern
-│   ├── base.repository.ts      # Generic repository
-│   ├── example.repository.ts   # Example
-│   └── README.md
-├── migrations/                 # Versioned migrations
-│   ├── 1703851200000-CreateExampleTable.ts
-│   └── README.md
-├── schemas/                    # Zod schemas
-│   ├── example.schema.ts       # Validation + inferred types
-│   └── template.schema.ts
-├── interfaces/                 # TypeScript interfaces (DTOs)
-│   ├── example.interface.ts
-│   └── README.md
-├── routes/                     # Controllers
-│   ├── index.ts                # Main router
-│   ├── example.routes.ts       # Complete CRUD
-│   └── template.routes.ts
-├── middlewares/
-│   ├── async.handler.ts        # asyncHandler, withTimeout, withRetry
-│   ├── error.handler.ts        # Global error handler
-│   ├── validator.handler.ts    # Zod validation
-│   ├── rate-limit.handler.ts   # Rate limiting
-│   └── perf.handler.ts
-├── utils/
-│   ├── logger.ts               # Structured logging
-│   ├── validation.ts           # parseIntSafe, validatePagination
-│   ├── pagination.ts           # SQL pagination
-│   └── response.ts             # HTTP helpers
-├── environments/               # Environment configuration
-│   ├── index.ts
-│   ├── environments.development.ts
-│   ├── environments.production.ts
-│   └── environments.testing.ts
-├── types/
-│   └── index.ts                # Global types
-├── docs/                       # Documentation
-│   ├── TYPEORM_MIGRATION.md
-│   ├── ZOD_TYPEORM_SYNC.md
-│   ├── SECURITY.md
-│   └── ...
-├── .github/workflows/          # CI/CD
-│   ├── ci-cd.yml
-│   └── pr-checks.yml
-├── index.ts                    # Entry point
-├── instrument.ts               # Sentry init
-├── tsconfig.json
-├── jest.config.js
-├── .env.example
-└── README.md
-```
-
----
-
-## 🌐 API Usage
-
-### Available Endpoints
-
-| Method | Route | Description |
-|--------|------|-------------|
-| `GET` | `/` | Welcome message |
-| `GET` | `/health` | Health check (DB status) |
-| `GET` | `/api` | API info |
-| `GET` | `/docs` | Swagger UI |
-| `GET` | `/api/v1/examples` | List examples (paginated) |
-| `GET` | `/api/v1/examples/:id` | Get example by ID |
-| `GET` | `/api/v1/examples/email/:email` | Search by email |
-| `POST` | `/api/v1/examples` | Create example |
-| `PATCH` | `/api/v1/examples/:id` | Update example |
-| `DELETE` | `/api/v1/examples/:id` | Soft delete |
-| `DELETE` | `/api/v1/examples/:id/hard` | Hard delete |
-
-### Usage Examples
-
-#### 1. List Examples with Filters
-
-```bash
-GET /api/v1/examples?page=1&pageSize=10&isActive=true&sortBy=createdAt&sortOrder=DESC
-
-# Response
-{
-  "data": [
-    {
-      "id": 1,
-      "name": "John Doe",
-      "email": "john@example.com",
-      "description": "Example user",
-      "isActive": true,
-      "recordStatus": true,
-      "dataSource": "sql",
-      "createdAt": "2025-01-15T10:30:00.000Z",
-      "updatedAt": "2025-01-15T10:30:00.000Z"
-    }
-  ],
-  "meta": {
-    "total": 150,
-    "page": 1,
-    "pageSize": 10,
-    "totalPages": 15
-  }
-}
-```
-
-#### 2. Create Example
-
-```bash
-POST /api/v1/examples
-Content-Type: application/json
-
-{
-  "name": "Jane Smith",
-  "email": "jane@example.com",
-  "description": "New user",
-  "isActive": true
-}
-
-# Response (201 Created)
-{
-  "id": 2,
-  "name": "Jane Smith",
-  "email": "jane@example.com",
-  "description": "New user",
-  "isActive": true,
-  "recordStatus": true,
-  "dataSource": "sql",
-  "createdAt": "2025-01-16T14:20:00.000Z",
-  "updatedAt": "2025-01-16T14:20:00.000Z"
-}
-```
-
-#### 3. Update Example
-
-```bash
-PATCH /api/v1/examples/2
-Content-Type: application/json
-
-{
-  "description": "Updated description",
-  "isActive": false
-}
-
-# Response (200 OK)
-{
-  "id": 2,
-  "name": "Jane Smith",
-  "email": "jane@example.com",
-  "description": "Updated description",
-  "isActive": false,
-  "recordStatus": true,
-  "dataSource": "sql",
-  "createdAt": "2025-01-16T14:20:00.000Z",
-  "updatedAt": "2025-01-16T15:45:00.000Z"
-}
-```
-
-#### 4. Search by Email
-
-```bash
-GET /api/v1/examples/email/jane@example.com
-
-# Response (200 OK)
-{
-  "id": 2,
-  "name": "Jane Smith",
-  "email": "jane@example.com",
-  ...
-}
-```
-
-#### 5. Delete (Soft Delete)
-
-```bash
-DELETE /api/v1/examples/2
-
-# Response (204 No Content)
-```
-
----
-
-## ✅ Validation System (Zod)
-
-### Philosophy: Single Source of Truth
-
-**Zod schemas** are the single source of truth. TypeScript types are automatically inferred:
-
-```typescript
-// schemas/example.schema.ts
-import { z } from 'zod';
-
-// 1️⃣ Define Zod schema
-export const createExampleSchema = z.object({
-  name: z.string().min(3).max(255).trim(),
-  email: z.string().email().max(255).toLowerCase().trim(),
-  description: z.string().max(5000).trim().optional().nullable(),
-  isActive: z.boolean().default(true),
-});
-
-// 2️⃣ Automatically infer types
-export type CreateExampleInput = z.infer<typeof createExampleSchema>;
-
-// 3️⃣ Schema for updates (all fields optional)
-export const updateExampleSchema = createExampleSchema.partial();
-export type UpdateExampleInput = z.infer<typeof updateExampleSchema>;
-```
-
-### Usage in Routes
-
-```typescript
-// routes/example.routes.ts
-import { validatorHandler } from '../middlewares/validator.handler.js';
-import { createExampleSchema, type CreateExampleInput } from '../schemas/example.schema.js';
-
-router.post(
-  '/',
-  validatorHandler(createExampleSchema, 'body'), // ✅ Zod validation
-  asyncHandler(async (req: Request, res: Response) => {
-    const data = req.body as CreateExampleInput; // ✅ Inferred type
-    const example = await exampleRepo.create(data);
-    res.status(201).json(example);
-  })
-);
-```
-
-### Zod Advantages
-
-- ✅ **Type Inference** - `z.infer<typeof schema>` generates types automatically
-- ✅ **Runtime Validation** - Validates data at runtime
-- ✅ **Bundle Size** - ~8KB vs ~146KB (Joi)
-- ✅ **TypeScript First** - Designed for TypeScript
-- ✅ **Composable** - `.merge()`, `.extend()`, `.partial()`
-
-**Complete documentation**: [`docs/ZOD_MIGRATION.md`](docs/ZOD_MIGRATION.md)
-
----
-
-## 🗄️ TypeORM and Migrations
-
-### Entities
-
-Defined with decorators in [`entities/`](entities/):
-
-```typescript
-// entities/example.entity.ts
-import { Entity, Column } from 'typeorm';
-import { BaseEntity } from './base.entity.js';
-
-@Entity('examples')
-export class Example extends BaseEntity {
-  @Column({ type: 'varchar', length: 255 })
-  name!: string;
-
-  @Column({ type: 'varchar', length: 255, unique: true })
-  email!: string;
-
-  @Column({ type: 'text', nullable: true })
-  description!: string | null;
-
-  @Column({ type: 'boolean', default: true })
-  isActive!: boolean;
-}
-```
-
-### Repositories
-
-Repository Pattern in [`repositories/`](repositories/):
-
-```typescript
-// repositories/example.repository.ts
-import { BaseRepository } from './base.repository.js';
-import { Example } from '../entities/example.entity.js';
-
-export class ExampleRepository extends BaseRepository<Example> {
-  constructor() {
-    super(Example);
-  }
-
-  async findByEmail(email: string): Promise<Example | null> {
-    return this.repository.findOne({ where: { email } });
-  }
-
-  async findActiveExamples(): Promise<Example[]> {
-    return this.repository.find({ where: { isActive: true } });
-  }
-}
-```
-
-### Migrations
-
-```bash
-# 1. Modify entity
-# Edit entities/example.entity.ts
-
-# 2. Generate migration automatically
-npm run migration:generate -- migrations/AddPhoneToExample
-
-# 3. Review generated file in migrations/
-# migrations/1234567890000-AddPhoneToExample.ts
-
-# 4. Run migration
-npm run migration:run
-
-# 5. If something goes wrong, revert
-npm run migration:revert
-```
-
-### ⚠️ Important: Zod ↔ TypeORM Synchronization
-
-Keep synchronized:
-
-1. **Zod Schema** (validation + types) → [`schemas/example.schema.ts`](schemas/example.schema.ts)
-2. **Interfaces** (DTOs) → [`interfaces/example.interface.ts`](interfaces/example.interface.ts)
-3. **TypeORM Entity** (persistence) → [`entities/example.entity.ts`](entities/example.entity.ts)
-
-**Complete documentation**: [`docs/ZOD_TYPEORM_SYNC.md`](docs/ZOD_TYPEORM_SYNC.md), [`docs/TYPEORM_MIGRATION.md`](docs/TYPEORM_MIGRATION.md)
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# All tests
+# Run all tests
 npm test
 
-# Specific tests
-npm test async.handler.test
-```
+# Watch mode
+npm run test:watch
 
-### Test Example
-
-```typescript
-// test/example.test.ts
-import { describe, it, expect } from '@jest/globals';
-import { ExampleRepository } from '../repositories/example.repository.js';
-
-describe('ExampleRepository', () => {
-  let repo: ExampleRepository;
-
-  beforeEach(() => {
-    repo = new ExampleRepository();
-  });
-
-  it('should create an example', async () => {
-    const data = {
-      name: 'Test User',
-      email: 'test@example.com',
-      isActive: true,
-    };
-
-    const example = await repo.create(data);
-
-    expect(example.id).toBeDefined();
-    expect(example.name).toBe(data.name);
-    expect(example.email).toBe(data.email);
-  });
-});
+# Coverage report
+npm run test:coverage
 ```
 
 ---
 
 ## 🔒 Security
 
-### Implemented
+### Implemented Features
 
-- ✅ **Input Validation** - Zod with sanitization
-- ✅ **SQL Injection Prevention** - Parameterized TypeORM
-- ✅ **Rate Limiting** - 100 req/15min (prod)
-- ✅ **Helmet** - HTTP security headers
-- ✅ **CORS** - Origins whitelist
-- ✅ **JWT Validation** - OAuth 2.0 with Auth0
-- ✅ **Error Sanitization** - No stack traces in production
-- ✅ **Secrets Management** - `.env` variables
-
-### Security Audit
-
-```bash
-npm run security:audit
-```
-
-**Complete documentation**: [`docs/SECURITY.md`](docs/SECURITY.md)
-
----
-
-## 🚀 CI/CD
-
-### GitHub Actions
-
-Configured in [`.github/workflows/`](.github/workflows/):
-
-**`ci-cd.yml`** (Main Pipeline):
-- ✅ Build TypeScript (`npm run build`)
-- ✅ Type check (`npm run type-check`)
-- ✅ Tests (`npm test`)
-- ✅ Security audit
-- ✅ Deploy to staging (`develop` branch)
-- ✅ Deploy to production (`main` branch)
-
-**`pr-checks.yml`** (Pull Requests):
-- ✅ Type check
-- ✅ Build
-- ✅ Tests
-- ✅ Automatic comment with results
+| Feature | Implementation | Purpose |
+|---------|----------------|---------|
+| **Helmet** | `app.use(helmet())` | HTTP security headers |
+| **Rate Limiting** | `rate-limit.handler.ts` | Prevent brute-force |
+| **OAuth 2.0** | Auth0 integration | Secure authentication |
+| **Zod Validation** | Input validation | Prevent SQL injection/XSS |
+| **CORS** | Configured domains | Control cross-origin access |
+| **TypeScript Strict** | `strict: true` | Type safety |
 
 ---
 
 ## 📚 Additional Documentation
 
-| Document | Description |
-|-----------|-------------|
-| [`MIGRATION_SUMMARY.md`](MIGRATION_SUMMARY.md) | TypeORM migration summary |
-| [`ZOD_TYPEORM_SYNC_SUMMARY.md`](ZOD_TYPEORM_SYNC_SUMMARY.md) | Zod ↔ TypeORM synchronization |
-| [`docs/TYPEORM_MIGRATION.md`](docs/TYPEORM_MIGRATION.md) | Complete TypeORM guide |
-| [`docs/ZOD_MIGRATION.md`](docs/ZOD_MIGRATION.md) | Joi → Zod migration |
-| [`docs/ZOD_TYPEORM_SYNC.md`](docs/ZOD_TYPEORM_SYNC.md) | Synchronization pattern |
-| [`docs/SECURITY.md`](docs/SECURITY.md) | Security guide |
-| [`docs/MEJORAS_IMPLEMENTADAS.md`](docs/MEJORAS_IMPLEMENTADAS.md) | Improvements history |
-| [`entities/README.md`](entities/README.md) | Entities guide |
-| [`repositories/README.md`](repositories/README.md) | Repositories guide |
-| [`migrations/README.md`](migrations/README.md) | Migrations guide |
-| [`interfaces/README.md`](interfaces/README.md) | Interfaces guide |
+### Project Documents
 
----
+- **[README.md](README.md)** - Documentation in Spanish
+- **[scripts/README.md](scripts/README.md)** - Generator documentation
+- **[scripts/QUICKSTART.md](scripts/QUICKSTART.md)** - Generator quick guide
+- **[entities/README.md](entities/README.md)** - Entities guide
+- **[repositories/README.md](repositories/README.md)** - Repositories guide
+- **[migrations/README.md](migrations/README.md)** - Migrations guide
 
-## 🤝 Contributing
+### External Resources
+
+- **TypeScript**: https://www.typescriptlang.org/docs/
+- **Express.js**: https://expressjs.com/
+- **TypeORM**: https://typeorm.io/
+- **Zod**: https://zod.dev/
+- **Jest**: https://jestjs.io/
+- **Auth0**: https://auth0.com/docs/
+
+### Contributing
+
+Found a bug? Have an idea to improve the project?
 
 1. Fork the repository
-2. Create branch: `git checkout -b feature/new-feature`
-3. Commit: `git commit -m 'Add: new feature'`
-4. Push: `git push origin feature/new-feature`
-5. Open Pull Request
+2. Create a branch: `git checkout -b feature/new-feature`
+3. Commit your changes: `git commit -m 'Add: new feature'`
+4. Push to the branch: `git push origin feature/new-feature`
+5. Open a Pull Request
 
-### Pre-commit Checklist
+### License
 
-- [ ] `npm run type-check` ✅
-- [ ] `npm run build` ✅
-- [ ] `npm test` ✅
-- [ ] `npm run lint` ✅
-- [ ] Documentation updated
+This project is licensed under the MIT License.
 
 ---
 
-## 👨‍💻 Author
-
-**Ismael Torres**
-- GitHub: [@ismaeltorresh](https://github.com/ismaeltorresh)
-- Repository: [neec-backend](https://github.com/ismaeltorresh/neec-backend)
-
----
-
-## 📝 License
-
-ISC © [@ismaeltorresh](https://github.com/ismaeltorresh)
-
----
-
-**⭐ If you found it useful, consider giving it a star on GitHub**
+**Made with ❤️ by the development team**

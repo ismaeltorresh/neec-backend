@@ -19,7 +19,9 @@
     "migration:run": "npm run typeorm -- migration:run -d db/ormconfig.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d db/ormconfig.ts",
     "schema:sync": "npm run typeorm -- schema:sync -d db/ormconfig.ts",
-    "schema:drop": "npm run typeorm -- schema:drop -d db/ormconfig.ts"
+    "schema:drop": "npm run typeorm -- schema:drop -d db/ormconfig.ts",
+    "generate:endpoint": "node scripts/generate-endpoint.js",
+    "generate": "node scripts/generate-endpoint.js"
   },
   "repository": {
     "type": "git",

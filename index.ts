@@ -1,6 +1,8 @@
 /**
- * Archivo principal de la aplicación NEEC Backend
- * Configura Express, middlewares, rutas y conexión a base de datos
+ * [ES] Archivo principal de la aplicación NEEC Backend
+ * [EN] NEEC Backend application main file
+ * [ES] Configura Express, middlewares, rutas y conexión a base de datos
+ * [EN] Configures Express, middlewares, routes and database connection
  * 
  * @module index
  */
@@ -31,12 +33,14 @@ import logger from './utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Validación de variables de entorno críticas
+// [ES] Validación de variables de entorno críticas
+// [EN] Critical environment variables validation
 const requiredEnvVars: Record<string, string | undefined> = {
   'NODE_ENV': process.env.NODE_ENV
 };
 
-// Solo validar DB si no está en modo test
+// [ES] Solo validar DB si no está en modo test
+// [EN] Only validate DB if not in test mode
 if (process.env.NODE_ENV !== 'test') {
   requiredEnvVars['DB_HOST'] = process.env.DB_HOST;
   requiredEnvVars['DB_NAME'] = process.env.DB_NAME;
@@ -48,15 +52,16 @@ const missingVars = Object.entries(requiredEnvVars)
   .map(([key]) => key);
 
 if (missingVars.length > 0) {
-  logger.error('Missing required environment variables', { missing: missingVars });
-  logger.error('Please check your .env file or environment configuration');
+  logger.error('[ES] Variables de entorno requeridas faltantes / [EN] Missing required environment variables', { missing: missingVars });
+  logger.error('[ES] Por favor verifica tu archivo .env o configuración de entorno / [EN] Please check your .env file or environment configuration');
   process.exit(1);
 }
 
-// Validar valores de NODE_ENV
+// [ES] Validar valores de NODE_ENV
+// [EN] Validate NODE_ENV values
 const validEnvs = ['development', 'production', 'test'];
 if (!validEnvs.includes(process.env.NODE_ENV!)) {
-  logger.warn('NODE_ENV is not standard', { 
+  logger.warn('[ES] NODE_ENV no es estándar / [EN] NODE_ENV is not standard', { 
     current: process.env.NODE_ENV, 
     expected: validEnvs 
   });
@@ -64,10 +69,12 @@ if (!validEnvs.includes(process.env.NODE_ENV!)) {
 
 const app = express();
 
-// CORS configuration
+// [ES] Configuración de CORS
+// [EN] CORS configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: CorsCallback) {
-    // Allow requests with no origin (like mobile apps, curl, Postman) in development
+    // [ES] Permitir solicitudes sin origen (como aplicaciones móviles, curl, Postman) en desarrollo
+    // [EN] Allow requests with no origin (like mobile apps, curl, Postman) in development
     if (!origin && env.execution === 'development') {
       return callback(null, true);
     }
@@ -79,7 +86,8 @@ const corsOptions = {
   }
 };
 
-// Swagger UI for docs (protected)
+// [ES] Swagger UI para documentación (protegido)
+// [EN] Swagger UI for docs (protected)
 let swaggerUi: any;
 let YAML: any;
 try {
@@ -88,11 +96,13 @@ try {
   const yamlModule = await import('yaml');
   YAML = yamlModule.default;
 } catch (e) {
-  // swagger-ui-express not installed; docs will be available via tools/serve-docs.js
+  // [ES] swagger-ui-express no instalado; documentación estará disponible vía tools/serve-docs.js
+  // [EN] swagger-ui-express not installed; docs will be available via tools/serve-docs.js
   swaggerUi = null;
 }
 
-// OAuth middleware configuration
+// [ES] Configuración del middleware OAuth
+// [EN] OAuth middleware configuration
 if (env.oauth) {
   if (process.env.AUDIENCE && process.env.ISSUER_BASE_URL) {
     try {
@@ -101,33 +111,37 @@ if (env.oauth) {
         issuerBaseURL: process.env.ISSUER_BASE_URL,
       });
       app.use(jwtCheck);
-      logger.info('OAuth middleware initialized successfully');
+      logger.info('[ES] Middleware OAuth inicializado exitosamente / [EN] OAuth middleware initialized successfully');
     } catch (error) {
       const err = error as Error;
-      logger.error('Error initializing OAuth middleware', { error: err.message });
+      logger.error('[ES] Error inicializando middleware OAuth / [EN] Error initializing OAuth middleware', { error: err.message });
     }
   } else {
-    logger.error('OAuth enabled but AUDIENCE or ISSUER_BASE_URL missing');
+    logger.error('[ES] OAuth habilitado pero AUDIENCE o ISSUER_BASE_URL faltantes / [EN] OAuth enabled but AUDIENCE or ISSUER_BASE_URL missing');
     process.exit(1);
   }
 }
 
-// Disable X-Powered-By header for security (information disclosure)
+// [ES] Deshabilitar header X-Powered-By por seguridad (divulgación de información)
+// [EN] Disable X-Powered-By header for security (information disclosure)
 app.disable('x-powered-by');
 
-// Limit request body size to prevent large payload DoS
+// [ES] Limitar tamaño del cuerpo de solicitud para prevenir DoS de payloads grandes
+// [EN] Limit request body size to prevent large payload DoS
 app.use(express.json({ limit: env.bodyLimit }));
 
-// Enable response compression
+// [ES] Habilitar compresión de respuesta
+// [EN] Enable response compression
 app.use(compression({
   filter: (req: Request, res: Response) => {
     if (req.headers['x-no-compression']) return false;
     return compression.filter(req, res);
   },
-  threshold: 1024 // Only compress responses larger than 1KB
+  threshold: 1024 // [ES] Solo comprimir respuestas mayores a 1KB / [EN] Only compress responses larger than 1KB
 }));
 
-// Security headers with helmet
+// [ES] Headers de seguridad con helmet
+// [EN] Security headers with helmet
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -146,12 +160,14 @@ app.use(helmet({
 
 app.use(cors(corsOptions));
 
-// Apply rate limiting to all API routes
+// [ES] Aplicar rate limiting a todas las rutas de API
+// [EN] Apply rate limiting to all API routes
 app.use('/api/', limiter);
 
 app.use(perfTimeout);
 
-// *** CONFIGURE ROUTES AND MIDDLEWARES ***
+// [ES] *** CONFIGURAR RUTAS Y MIDDLEWARES ***
+// [EN] *** CONFIGURE ROUTES AND MIDDLEWARES ***
 if (env.execution === 'development' || env.execution === 'production') {
 
   app.get('/', (_req: Request, res: Response) => {

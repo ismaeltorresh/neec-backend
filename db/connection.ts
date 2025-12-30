@@ -1,5 +1,6 @@
 /**
- * Configuración de conexión a la base de datos MariaDB usando TypeORM
+ * [ES] Configuración de conexión a la base de datos MariaDB usando TypeORM
+ * [EN] MariaDB database connection configuration using TypeORM
  * 
  * @module db/connection
  */
@@ -16,7 +17,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Configuración del pool de conexiones para TypeORM
+ * [ES] Configuración del pool de conexiones para TypeORM
+ * [EN] Connection pool configuration for TypeORM
  */
 interface PoolConfig {
   max: number;
@@ -26,8 +28,10 @@ interface PoolConfig {
 }
 
 /**
- * Default pool configuration for MariaDB connection.
- * Based on TypeORM best practices and production requirements.
+ * [ES] Configuración predeterminada del pool para conexión a MariaDB
+ * [EN] Default pool configuration for MariaDB connection
+ * [ES] Basado en mejores prácticas de TypeORM y requisitos de producción
+ * [EN] Based on TypeORM best practices and production requirements
  */
 const DEFAULT_POOL_CONFIG: PoolConfig = {
   max: 10,
@@ -37,13 +41,15 @@ const DEFAULT_POOL_CONFIG: PoolConfig = {
 };
 
 /**
- * Validates and builds pool configuration with security checks.
- * @returns Validated pool configuration
+ * [ES] Valida y construye la configuración del pool con validaciones de seguridad
+ * [EN] Validates and builds pool configuration with security checks
+ * @returns {PoolConfig} [ES] Configuración del pool validada / [EN] Validated pool configuration
  */
 function buildPoolConfig(): PoolConfig {
   const poolConfig: PoolConfig = { ...DEFAULT_POOL_CONFIG };
 
-  // Override from environment variables if provided
+  // [ES] Sobrescribir desde variables de entorno si se proporcionan
+  // [EN] Override from environment variables if provided
   if (process.env.DB_POOL_MAX) {
     poolConfig.max = Math.min(Number(process.env.DB_POOL_MAX), 100);
   }
@@ -51,24 +57,27 @@ function buildPoolConfig(): PoolConfig {
     poolConfig.min = Math.max(Number(process.env.DB_POOL_MIN), 1);
   }
 
-  // Security validations
+  // [ES] Validaciones de seguridad
+  // [EN] Security validations
   if (poolConfig.max > 100) {
-    logger.warn('Pool max exceeds recommended limit', { max: poolConfig.max, limit: 100 });
+    logger.warn('[ES] El máximo del pool excede el límite recomendado / [EN] Pool max exceeds recommended limit', { max: poolConfig.max, limit: 100 });
     poolConfig.max = 100;
   }
   if (poolConfig.min > poolConfig.max) {
-    throw new Error('Pool min cannot exceed max');
+    throw new Error('[ES] El mínimo del pool no puede exceder el máximo / [EN] Pool min cannot exceed max');
   }
 
-  logger.info('Database pool configured', poolConfig as unknown as Record<string, unknown>);
+  logger.info('[ES] Pool de base de datos configurado / [EN] Database pool configured', poolConfig as unknown as Record<string, unknown>);
   return poolConfig;
 }
 
 const poolConfig = buildPoolConfig();
 
 /**
- * TypeORM DataSource configuration for MariaDB.
- * Uses mysql2 driver which is compatible with MariaDB.
+ * [ES] Configuración de TypeORM DataSource para MariaDB
+ * [EN] TypeORM DataSource configuration for MariaDB
+ * [ES] Usa el driver mysql2 que es compatible con MariaDB
+ * [EN] Uses mysql2 driver which is compatible with MariaDB
  */
 const dataSourceOptions: DataSourceOptions = {
   type: 'mysql',
@@ -77,12 +86,13 @@ const dataSourceOptions: DataSourceOptions = {
   username: env.db.maria.user,
   password: env.db.maria.password,
   database: env.db.maria.database,
-  synchronize: false, // NEVER use true in production
+  synchronize: false, // [ES] NUNCA usar true en producción / [EN] NEVER use true in production
   logging: env.execution === 'development',
   entities: [join(__dirname, '../entities/**/*.entity.{ts,js}')],
   migrations: [join(__dirname, '../migrations/**/*.{ts,js}')],
   subscribers: [join(__dirname, '../subscribers/**/*.{ts,js}')],
-  // Connection pool configuration (Bulkhead pattern - Section 12.C)
+  // [ES] Configuración del pool de conexiones (Patrón Bulkhead - Sección 12.C)
+  // [EN] Connection pool configuration (Bulkhead pattern - Section 12.C)
   extra: {
     connectionLimit: poolConfig.max,
     waitForConnections: true,
@@ -90,11 +100,14 @@ const dataSourceOptions: DataSourceOptions = {
     acquireTimeout: poolConfig.acquireTimeout,
     idleTimeout: poolConfig.idleTimeout,
   },
-  // Connection timeouts to prevent long-running queries (Section 3.C)
+  // [ES] Timeouts de conexión para prevenir consultas de larga duración (Sección 3.C)
+  // [EN] Connection timeouts to prevent long-running queries (Section 3.C)
   connectTimeout: 10000,
-  // Enable timezone support
+  // [ES] Habilitar soporte de zona horaria
+  // [EN] Enable timezone support
   timezone: '+00:00',
-  // Charset for proper UTF-8 support
+  // [ES] Charset para soporte completo de UTF-8
+  // [EN] Charset for proper UTF-8 support
   charset: 'utf8mb4',
 };
 

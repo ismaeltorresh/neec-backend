@@ -1,5 +1,6 @@
 /**
- * Middlewares de manejo de errores
+ * [ES] Middlewares de manejo de errores
+ * [EN] Error handling middlewares
  * 
  * @module middlewares/error.handler
  */
@@ -11,17 +12,20 @@ import * as Sentry from '@sentry/node';
 import logger from '../utils/logger.js';
 
 /**
- * Middleware para rutas no encontradas (404)
+ * [ES] Middleware para rutas no encontradas (404)
+ * [EN] Middleware for not found routes (404)
  */
 export const errorNotFound: RequestHandler = (_req: Request, res: Response, _next: NextFunction): void => {
   res.status(404).json({ error: 'The requested route was not found' });
 };
 
 /**
- * Middleware para logging de errores
+ * [ES] Middleware para logging de errores
+ * [EN] Middleware for error logging
  */
 export const errorLog: ErrorRequestHandler = (err: any, req: Request, _res: Response, next: NextFunction): void => {
-  // Structured logging
+  // [ES] Logging estructurado
+  // [EN] Structured logging
   const errorContext = {
     timestamp: new Date().toISOString(),
     method: req.method,
@@ -36,21 +40,25 @@ export const errorLog: ErrorRequestHandler = (err: any, req: Request, _res: Resp
   if (env.execution === 'development') {
     logger.error('Request error', { ...errorContext, stack: err.stack });
   } else {
-    // In production, log without stack trace
-    logger.error('Request error', errorContext);
+    // [ES] En producción, registrar sin stack trace
+    // [EN] In production, log without stack trace
+    logger.error('[ES] Error de solicitud / [EN] Request error', errorContext);
   }
 
   next(err);
 };
 
 /**
- * Middleware principal de manejo de errores
+ * [ES] Middleware principal de manejo de errores
+ * [EN] Main error handling middleware
  */
 export const errorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, _next: NextFunction): void => {
-  // Determine status code
+  // [ES] Determinar código de estado
+  // [EN] Determine status code
   const statusCode = err.statusCode || err.status || 500;
   
-  // Send to Sentry in production (only for 5xx errors)
+  // [ES] Enviar a Sentry en producción (solo errores 5xx)
+  // [EN] Send to Sentry in production (only for 5xx errors)
   if (env.execution === 'production' && statusCode >= 500) {
     Sentry.captureException(err, {
       tags: {

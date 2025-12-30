@@ -242,6 +242,23 @@ Strictly respect verbs and status codes:
 ### C. Documentation
 *   All routes must be documented with **OpenAPI 3.0+ / Swagger** compatible comments (see Section 10.A).
 *   Use JSDoc with TypeScript types for better IDE support.
+*   **Bilingual Documentation Required:**
+    *   Project documentation must be maintained in both `README.md` (Spanish) and `README-EN.md` (English).
+    *   Code comments must be bilingual using JSDoc format with `[ES]` / `[EN]` prefixes.
+    *   Example:
+        ```typescript
+        /**
+         * [ES] Maneja la creación de un nuevo usuario
+         * [EN] Handles the creation of a new user
+         * @param {CreateUserInput} userData - [ES] Datos del usuario / [EN] User data
+         * @returns {Promise<User>} [ES] Usuario creado / [EN] Created user
+         */
+        async function createUser(userData: CreateUserInput): Promise<User> {
+          // [ES] Validar datos de entrada
+          // [EN] Validate input data
+          ...
+        }
+        ```
 *   All interfaces and types documented in code.
 *   Include request/response examples in OpenAPI spec.
 *   Document authentication requirements and rate limits per endpoint.
@@ -700,6 +717,71 @@ Monitor these four critical metrics for every service:
 * Expose health and readiness endpoints (Section 14.E)
 * Monitor Golden Signals for all critical paths (Section 14.B)
 
+### H. Bilingual Documentation Standards
+* **README Files:** Maintain synchronized documentation in both languages:
+  * `README.md` - Spanish version (primary)
+  * `README-EN.md` - English version (translation)
+  * Both files must contain the same sections and information
+  * Update both files simultaneously when making documentation changes
+* **Code Comments:** Use bilingual JSDoc format with language prefixes:
+  * Format: `[ES] Spanish text / [EN] English text`
+  * Apply to: function descriptions, parameter descriptions, return values, complex logic explanations
+  * Inline comments: Bilingual format when explaining complex logic
+  * Type definitions: Include bilingual descriptions in JSDoc
+* **Examples:**
+  ```typescript
+  /**
+   * [ES] Repositorio para gestionar operaciones de usuarios
+   * [EN] Repository for managing user operations
+   * 
+   * @class UserRepository
+   * @extends {BaseRepository<User>}
+   */
+  export class UserRepository extends BaseRepository<User> {
+    /**
+     * [ES] Busca usuarios activos por email
+     * [EN] Find active users by email
+     * 
+     * @param {string} email - [ES] Dirección de correo electrónico / [EN] Email address
+     * @returns {Promise<User[]>} [ES] Lista de usuarios encontrados / [EN] List of found users
+     * @throws {Boom.notFound} [ES] Si no se encuentran usuarios / [EN] If no users are found
+     */
+    async findByEmail(email: string): Promise<User[]> {
+      // [ES] Validar formato del email antes de la consulta
+      // [EN] Validate email format before query
+      if (!isValidEmail(email)) {
+        throw boom.badRequest('[ES] Email inválido / [EN] Invalid email');
+      }
+      
+      try {
+        // [ES] Buscar en base de datos con recordStatus activo
+        // [EN] Search database with active recordStatus
+        return await this.repository.find({
+          where: { email, recordStatus: true },
+          order: { createdAt: 'DESC' }
+        });
+      } catch (error) {
+        logger.error('[ES] Error buscando usuarios por email / [EN] Error finding users by email', {
+          email,
+          error: (error as Error).message
+        });
+        throw boom.internal('[ES] Error en consulta de base de datos / [EN] Database query failed');
+      }
+    }
+  }
+  ```
+* **Zod Schemas:** Include bilingual error messages:
+  ```typescript
+  export const createUserSchema = z.object({
+    name: z.string()
+      .min(3, '[ES] El nombre debe tener al menos 3 caracteres / [EN] Name must be at least 3 characters')
+      .max(255, '[ES] El nombre no puede exceder 255 caracteres / [EN] Name cannot exceed 255 characters'),
+    email: z.string()
+      .email('[ES] Email inválido / [EN] Invalid email')
+  });
+  ```
+* **Error Messages:** API responses should support both languages based on `Accept-Language` header when possible
+
 ---
 
 ## 16. COMMANDS AND SCRIPTS
@@ -732,9 +814,9 @@ When generating new code, always ensure:
 3. **Security:** Rate limiting, input sanitization, proper authentication/authorization.
 4. **Resilience:** Circuit breakers, retries with backoff, timeout handling.
 5. **Observability:** Structured logging with trace IDs, metrics instrumentation.
-6. **Documentation:** OpenAPI comments, JSDoc, inline comments for complex logic.
+6. **Bilingual Documentation:** OpenAPI comments, JSDoc with [ES]/[EN] prefixes, inline bilingual comments for complex logic.
 7. **Testing:** Unit tests with proper TypeScript types.
-8. **Error Handling:** Use Boom errors, handle all edge cases.
+8. **Error Handling:** Use Boom errors with bilingual messages, handle all edge cases.
 
 ### B. Quality Gates
 Before considering code complete:
@@ -743,6 +825,9 @@ Before considering code complete:
 * ✅ No linting errors (`npm run lint`)
 * ✅ Security audit passes (`npm run security:audit`)
 * ✅ OpenAPI documentation updated
+* ✅ README.md and README-EN.md updated (if applicable)
+* ✅ All JSDoc comments use bilingual [ES]/[EN] format
+* ✅ Zod validation messages are bilingual
 * ✅ Follows RESTful conventions (Section 10)
 * ✅ Implements resilience patterns where applicable (Section 12)
 * ✅ Includes proper logging and metrics (Section 14)

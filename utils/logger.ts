@@ -1,6 +1,8 @@
 /**
- * Logger centralizado para reemplazar console.log/warn/error
- * Provee logging estructurado con niveles y contexto
+ * [ES] Logger centralizado para reemplazar console.log/warn/error
+ * [EN] Centralized logger to replace console.log/warn/error
+ * [ES] Provee logging estructurado con niveles y contexto
+ * [EN] Provides structured logging with levels and context
  * 
  * @module utils/logger
  */
@@ -10,7 +12,8 @@ import type { LogLevel, LogContext } from '../types/index.js';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
- * Formatea mensaje con timestamp y nivel
+ * [ES] Formatea mensaje con timestamp y nivel
+ * [EN] Formats message with timestamp and level
  */
 const formatMessage = (level: LogLevel, message: string, context: LogContext = {}): string => {
   const timestamp = new Date().toISOString();
@@ -22,11 +25,13 @@ const formatMessage = (level: LogLevel, message: string, context: LogContext = {
 };
 
 /**
- * Logger con niveles de severidad
+ * [ES] Logger con niveles de severidad
+ * [EN] Logger with severity levels
  */
 export const logger = {
   /**
-   * Log informativo (solo desarrollo)
+   * [ES] Log informativo (solo desarrollo)
+   * [EN] Informational log (development only)
    */
   info: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {
@@ -35,21 +40,24 @@ export const logger = {
   },
 
   /**
-   * Warning (desarrollo y producción)
+   * [ES] Warning (desarrollo y producción)
+   * [EN] Warning (development and production)
    */
   warn: (message: string, context: LogContext = {}): void => {
     console.warn(formatMessage('WARN', message, context));
   },
 
   /**
-   * Error (siempre)
+   * [ES] Error (siempre)
+   * [EN] Error (always)
    */
   error: (message: string, context: LogContext = {}): void => {
     console.error(formatMessage('ERROR', message, context));
   },
 
   /**
-   * Debug (solo desarrollo)
+   * [ES] Debug (solo desarrollo)
+   * [EN] Debug (development only)
    */
   debug: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {
@@ -58,7 +66,8 @@ export const logger = {
   },
 
   /**
-   * Log de conexión DB (desarrollo)
+   * [ES] Log de conexión DB (desarrollo)
+   * [EN] Database connection log (development)
    */
   db: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {
@@ -67,7 +76,8 @@ export const logger = {
   },
 
   /**
-   * Log de performance (desarrollo)
+   * [ES] Log de performance (desarrollo)
+   * [EN] Performance log (development)
    */
   perf: (message: string, context: LogContext = {}): void => {
     if (isDevelopment) {

@@ -1,10 +1,12 @@
 /**
- * Tipos e interfaces globales para el proyecto NEEC Backend
+ * [ES] Tipos e interfaces globales para el proyecto NEEC Backend
+ * [EN] Global types and interfaces for NEEC Backend project
  * @module types
  */
 
 /**
- * Configuración del entorno de ejecución
+ * [ES] Configuración del entorno de ejecución
+ * [EN] Runtime environment configuration
  */
 export interface Environment {
   execution: 'development' | 'production' | 'test';
@@ -36,7 +38,8 @@ export interface Environment {
 }
 
 /**
- * Parámetros de paginación
+ * [ES] Parámetros de paginación
+ * [EN] Pagination parameters
  */
 export interface PaginationParams {
   page?: number | string;
@@ -44,7 +47,8 @@ export interface PaginationParams {
 }
 
 /**
- * Resultado paginado
+ * [ES] Resultado paginado
+ * [EN] Paginated result
  */
 export interface PaginationResult<T> {
   data: T[];
@@ -57,7 +61,8 @@ export interface PaginationResult<T> {
 }
 
 /**
- * Opciones para paginación SQL
+ * [ES] Opciones para paginación SQL
+ * [EN] Options for SQL pagination
  */
 export interface SqlPaginateOptions {
   table: string;
@@ -80,17 +85,20 @@ export interface SqlPaginateOptions {
 }
 
 /**
- * Niveles de log
+ * [ES] Niveles de log
+ * [EN] Log levels
  */
 export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG' | 'DB' | 'PERF';
 
 /**
- * Contexto de log
+ * [ES] Contexto de log
+ * [EN] Log context
  */
 export type LogContext = Record<string, unknown>;
 
 /**
- * Schema base para entidades
+ * [ES] Schema base para entidades
+ * [EN] Base schema for entities
  */
 export interface BaseSchema {
   id: string;
