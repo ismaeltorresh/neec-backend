@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "cross-env NODE_ENV=development nodemon --exec \"node --loader ts-node/esm\" index.ts",
+    "dev": "cross-env NODE_ENV=development nodemon --exec \"node --import tsx\" index.ts",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "test": "cross-env NODE_ENV=development NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint",
-    "docs": "node tools/serve-docs.js",
+    "docs": "node --import tsx tools/serve-docs.ts",
     "security:audit": "bash scripts/security-audit.sh",
     "type-check": "tsc --noEmit",
     "typeorm": "typeorm-ts-node-esm",
@@ -42,6 +42,7 @@
     "nodemon": "^3.1.4",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {

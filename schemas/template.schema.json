@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Template Schema",
+  "description": "JSON Schema for template CRUD operations with validation rules",
+  "definitions": {
+    "dataSource": {
+      "type": "string",
+      "enum": ["sql", "nosql", "both", "fake"],
+      "description": "The origin or destination of the data"
+    },
+    "recordStatus": {
+      "type": "integer",
+      "enum": [0, 1],
+      "description": "Indicates if the record can be displayed or not"
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "Unique identifier in UUID format"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Slug for URL-friendly representation"
+    },
+    "dateTime": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
+      "description": "Date and time in format YYYY-MM-DD HH:MM:SS"
+    },
+    "isoDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 date-time format"
+    },
+    "sortDirection": {
+      "type": "string",
+      "enum": ["ASC", "DESC"],
+      "description": "Sort direction"
+    }
+  },
+  "schemas": {
+    "deleteSchema": {
+      "type": "object",
+      "required": ["dataSource", "id", "recordStatus", "updatedAt", "updatedBy"],
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/dataSource"
+        },
+        "id": {
+          "$ref": "#/definitions/uuid"
+        },
+        "recordStatus": {
+          "$ref": "#/definitions/recordStatus"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/dateTime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/uuid"
+        }
+      },
+      "additionalProperties": false
+    },
+    "getSchema": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/dataSource"
+        },
+        "recordStatus": {
+          "$ref": "#/definitions/recordStatus"
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Page number for pagination"
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10,
+          "description": "Number of items per page"
+        },
+        "id": {
+          "$ref": "#/definitions/uuid"
+        },
+        "brand": {
+          "type": "string",
+          "description": "Brand filter"
+        },
+        "categoryId": {
+          "type": "integer",
+          "description": "Category ID filter"
+        },
+        "sku": {
+          "type": "string",
+          "description": "SKU filter"
+        },
+        "code": {
+          "type": "string",
+          "description": "Code filter"
+        },
+        "q": {
+          "type": "string",
+          "description": "Search query"
+        },
+        "sortBy": {
+          "type": "string",
+          "description": "Column to sort by"
+        },
+        "sortDir": {
+          "$ref": "#/definitions/sortDirection"
+        }
+      },
+      "additionalProperties": false
+    },
+    "updateSchema": {
+      "type": "object",
+      "required": ["dataSource", "id", "updatedAt", "updatedBy", "recordStatus"],
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/dataSource"
+        },
+        "id": {
+          "$ref": "#/definitions/uuid"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/dateTime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/uuid"
+        },
+        "recordStatus": {
+          "$ref": "#/definitions/recordStatus"
+        }
+      },
+      "additionalProperties": false
+    },
+    "postSchema": {
+      "type": "object",
+      "required": ["createdAt", "dataSource", "id", "recordStatus", "updatedAt", "updatedBy", "useAs"],
+      "properties": {
+        "createdAt": {
+          "$ref": "#/definitions/isoDate"
+        },
+        "dataSource": {
+          "$ref": "#/definitions/dataSource"
+        },
+        "id": {
+          "$ref": "#/definitions/uuid"
+        },
+        "recordStatus": {
+          "$ref": "#/definitions/recordStatus"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/dateTime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/uuid"
+        },
+        "useAs": {
+          "type": "string",
+          "description": "The use you will give e.g. contact | ..."
+        }
+      },
+      "additionalProperties": false
+    },
+    "paramsSchema": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/uuid"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
